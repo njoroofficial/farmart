@@ -1,5 +1,5 @@
 """
-app/models/animal.py
+
 
 Animal-related models: AnimalType, Breed, Animal, AnimalImage.
 
@@ -34,7 +34,7 @@ from app.extensions import db
 from app.models.base import BaseModel
 
 
-# ─── Status constants ─────────────────────────────────────────────────────────
+#  Status constants 
 
 class AnimalStatus:
     AVAILABLE = "available"
@@ -43,8 +43,7 @@ class AnimalStatus:
     ALL       = ["available", "reserved", "sold"]
 
 
-# ─── Animal Type ──────────────────────────────────────────────────────────────
-
+# Animal Type 
 class AnimalType(BaseModel):
     """
     Reference table for animal categories — Cattle, Goat, Sheep, Pig, etc.
@@ -80,7 +79,7 @@ class AnimalType(BaseModel):
         ).first()
 
 
-# ─── Breed ────────────────────────────────────────────────────────────────────
+#  Breed 
 
 class Breed(BaseModel):
     """
@@ -117,7 +116,7 @@ class Breed(BaseModel):
         }
 
 
-# ─── Animal ───────────────────────────────────────────────────────────────────
+#  Animal 
 
 class Animal(BaseModel):
     """
@@ -158,7 +157,7 @@ class Animal(BaseModel):
         index=True,
     )
 
-    # ── Relationships ──────────────────────────────────────────────────────────
+    #  Relationships 
     farmer      = db.relationship("User",       foreign_keys=[farmer_id], lazy="select")
     animal_type = db.relationship("AnimalType", back_populates="animals", lazy="select")
     breed       = db.relationship("Breed",      back_populates="animals", lazy="select")
@@ -170,7 +169,7 @@ class Animal(BaseModel):
         order_by="AnimalImage.is_primary.desc()",  # Primary image always first
     )
 
-    # ── Computed properties ────────────────────────────────────────────────────
+    #  Computed properties 
 
     @property
     def primary_image_url(self) -> str | None:
@@ -185,7 +184,7 @@ class Animal(BaseModel):
     def is_available(self) -> bool:
         return self.status == AnimalStatus.AVAILABLE
 
-    # ── Serialisation ──────────────────────────────────────────────────────────
+    #  Serialisation 
 
     def to_dict(self, include_farmer: bool = False) -> dict:
         """
@@ -225,7 +224,7 @@ class Animal(BaseModel):
 
         return data
 
-    # ── Query helpers ──────────────────────────────────────────────────────────
+    #  Query helpers 
 
     @classmethod
     def build_list_query(cls, filters: dict):
@@ -290,7 +289,7 @@ class Animal(BaseModel):
         return query
 
 
-# ─── Animal Image ─────────────────────────────────────────────────────────────
+#  Animal Image 
 
 class AnimalImage(BaseModel):
     """

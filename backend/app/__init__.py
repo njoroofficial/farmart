@@ -41,19 +41,19 @@ def create_app(config_name: str = None) -> Flask:
     Returns:
         A fully configured Flask application instance.
     """
-    # ── 1. Resolve which config to use
+    # 1. Resolve which config to use
     # Priority: argument passed to create_app > FLASK_ENV env var > "development"
     # This means tests can pass "testing" explicitly, and production servers
     # set FLASK_ENV=production in their environment.
     if config_name is None:
         config_name = os.getenv("FLASK_ENV", "development")
 
-    # ── 2. Create the Flask app object 
+    # 2. Create the Flask app object 
     # __name__ tells Flask where to look for templates and static files.
     # Since we don't serve HTML (pure API), this is mostly a convention.
     app = Flask(__name__)
 
-    # ── 3. Load configuration 
+    # 3. Load configuration 
     # from_object() reads all uppercase attributes from the config class
     # and sets them as Flask config values. That's why all config keys
     # are UPPERCASE in config.py — Flask only reads uppercase keys.
@@ -65,7 +65,7 @@ def create_app(config_name: str = None) -> Flask:
     if config_name == "production":
         config_class.validate()
 
-    # ── 4. Initialise extensions
+    # 4. Initialise extensions
     # init_app() binds each extension to this specific app instance.
     # After this point, db.session, jwt decorators, etc. all work correctly.
     db.init_app(app)
@@ -77,7 +77,7 @@ def create_app(config_name: str = None) -> Flask:
         supports_credentials=app.config["CORS_SUPPORTS_CREDENTIALS"],
     )
 
-    # ── 5. Import models 
+    # 5. Import models 
     # Flask-Migrate needs to "see" all models to generate migration scripts.
     # We import them here inside the factory to ensure they register with db
     # in the context of this app. The imports themselves trigger the class
@@ -87,7 +87,7 @@ def create_app(config_name: str = None) -> Flask:
     with app.app_context():
         from app.models import user, animal, cart, payment  # noqa: F401
 
-    # ── 6. Configure Cloudinary ───────────────────────────────────────────────
+    # 6. Configure Cloudinary 
     # Cloudinary uses a global configuration pattern rather than Flask's
     # init_app pattern. We call it inside create_app so it reads from
     # whichever app.config is active (dev keys vs production keys).
@@ -98,7 +98,7 @@ def create_app(config_name: str = None) -> Flask:
         secure=True,  # Always use HTTPS URLs for images
     )
 
-    # ── 7. Register custom CLI commands 
+    # 7. Register custom CLI commands 
     # Our custom `flask db-upgrade`, `flask db-migrate`, and `flask check-db`
     # commands live in cli.py. They wrap Flask-Migrate's standard commands
     # but force the use of MIGRATION_DATABASE_URL (the direct Supabase
@@ -106,7 +106,7 @@ def create_app(config_name: str = None) -> Flask:
     from app.cli import register_cli_commands
     register_cli_commands(app)
 
-    # ── 8. Register blueprints 
+    # 8. Register blueprints 
     # Blueprints are Flask's way of grouping related routes into modules.
     # Each domain (auth, animals, orders…) is its own Blueprint.
     # We pass url_prefix so every auth route starts with /api/v1/auth, etc.

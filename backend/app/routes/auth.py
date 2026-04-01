@@ -1,7 +1,6 @@
 """
-app/routes/auth.py
-─────────────────────────────────────────────────────────────────────────────
-Authentication Blueprint — all auth endpoints live here.
+
+Authentication Blueprint 
 
 ENDPOINTS:
   POST   /api/v1/auth/register           Register a new farmer or buyer
@@ -18,7 +17,7 @@ PATTERN USED IN EVERY ROUTE:
   2. Apply business rules (does the email already exist? is the token valid?)
   3. Perform the operation (create user, send email, issue JWT)
   4. Return a consistent response envelope
-─────────────────────────────────────────────────────────────────────────────
+
 """
 import re
 

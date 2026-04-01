@@ -1,5 +1,5 @@
 """
-app/services/image_service.py
+
 
 Cloudinary image upload service with compensation logic.
 

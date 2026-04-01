@@ -1,13 +1,12 @@
 """
-app/services/email_service.py
-─────────────────────────────────────────────────────────────────────────────
+
 Transactional email service powered by SendGrid.
 
-DESIGN PRINCIPLE — INTENT OVER MECHANICS:
+PRINCIPLE:
   Routes call high-level functions like send_verification_email(user, token).
   All SendGrid mechanics are hidden in this file. If you ever switch
   providers, only this file changes — no routes are touched.
-─────────────────────────────────────────────────────────────────────────────
+
 """
 import logging
 from flask import current_app
@@ -29,17 +28,8 @@ def _send(mail: Mail) -> bool:
     Returns True on success, False on any failure.
     We never let an email failure crash the API request — a user who registers
     should still see 201 Created even if SendGrid hiccups. We log every
-    failure with the full SendGrid error body so you can diagnose problems
-    without guessing.
+    failure with the full SendGrid error body.
 
-    ERROR BODY LOGGING:
-      SendGrid's Python library raises urllib.error.HTTPError on 4xx/5xx
-      responses. The exception carries a .body attribute containing the full
-      JSON error payload — e.g. "The from address does not match a verified
-      Sender Identity." We log this body explicitly so you see the real reason
-      instead of just a status code.
-
-    In TESTING mode we skip SendGrid entirely and log what would be sent.
     """
     # Skip real sending during automated tests
     if current_app.config.get("TESTING_EMAIL") or current_app.config.get("TESTING"):
@@ -85,21 +75,6 @@ def _build_mail(to_email: str, subject: str, html_body: str) -> Mail:
     """
     Construct a SendGrid Mail object using the simple constructor form.
 
-    WHY NOT THE HELPER CLASSES (From, To, Subject, HtmlContent)?
-      The SendGrid Python library offers two ways to build a Mail object.
-      The helper-class approach — assigning From(), To(), Subject() objects
-      as attributes — is granular but fragile. Small mistakes in usage order
-      produce 400 errors with unhelpful messages.
-
-      The positional-argument constructor below is what SendGrid's own
-      quickstart guide recommends. It handles all internal wiring correctly
-      and is much less likely to produce a malformed request.
-
-    SENDER IDENTITY:
-      from_email is passed as a (address, display_name) tuple so that
-      recipients see "Farmart <noreply@farmart.co.ke>" in their inbox
-      rather than a bare email address. Both values come from your .env
-      and must exactly match your verified SendGrid sender.
     """
     from_email = current_app.config["MAIL_FROM_EMAIL"]
     from_name  = current_app.config.get("MAIL_FROM_NAME", "Farmart")
@@ -112,7 +87,7 @@ def _build_mail(to_email: str, subject: str, html_body: str) -> Mail:
     )
 
 
-# ─── Email: Verification ──────────────────────────────────────────────────────
+# ─── Email: Verification 
 
 def send_verification_email(user, token_string: str) -> bool:
     """
@@ -158,7 +133,7 @@ def send_verification_email(user, token_string: str) -> bool:
     return _send(mail)
 
 
-# ─── Email: Password Reset ────────────────────────────────────────────────────
+# ─── Email: Password Reset
 
 def send_password_reset_email(user, token_string: str) -> bool:
     """
@@ -204,7 +179,7 @@ def send_password_reset_email(user, token_string: str) -> bool:
     return _send(mail)
 
 
-# ─── Email: Order Notification to Farmer ─────────────────────────────────────
+# ─── Email: Order Notification to Farmer 
 
 def send_order_notification_to_farmer(farmer_user, order) -> bool:
     """
@@ -254,7 +229,7 @@ def send_order_notification_to_farmer(farmer_user, order) -> bool:
     return _send(mail)
 
 
-# ─── Email: Order Confirmation to Buyer ──────────────────────────────────────
+# ─── Email: Order Confirmation to Buyer 
 
 def send_order_confirmation_to_buyer(buyer_user, order) -> bool:
     """

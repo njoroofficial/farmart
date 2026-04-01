@@ -1,6 +1,6 @@
 """
-app/models/user.py
-─────────────────────────────────────────────────────────────────────────────
+
+
 User model and the proxy profile models (FarmerProfile, BuyerProfile).
 
 THE PROXY PATTERN IN PRACTICE:
@@ -14,7 +14,7 @@ THE PROXY PATTERN IN PRACTICE:
   The relationship is always: User has one FarmerProfile OR one BuyerProfile,
   never both. This is enforced by the UNIQUE constraint on user_id in each
   profile table. 
-─────────────────────────────────────────────────────────────────────────────
+
 """
 import secrets
 from datetime import datetime, timezone, timedelta
