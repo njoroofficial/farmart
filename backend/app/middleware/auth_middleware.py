@@ -1,6 +1,5 @@
 """
-app/middleware/auth_middleware.py
-─────────────────────────────────────────────────────────────────────────────
+
 Role-based access control decorators.
 
 HOW DECORATORS WORK AS MIDDLEWARE:
@@ -37,7 +36,7 @@ FLASK'S g OBJECT:
   exactly one request and is then discarded. We use it to pass the current
   user from the decorator to the route function, so routes can access
   g.current_user without making a second database query.
-─────────────────────────────────────────────────────────────────────────────
+
 """
 from functools import wraps
 

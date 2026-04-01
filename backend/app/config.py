@@ -1,9 +1,8 @@
 """
-app/config.py
-─────────────────────────────────────────────────────────────────────────────
+
 Configuration system for the Farmart Flask application.
 
-MENTAL MODEL:
+MODEL:
   Think of Config classes like profiles on a phone — Development is your
   personal settings (verbose logging, local DB), Production is locked down
   (no debug mode, real secrets from env vars), Testing is isolated
@@ -11,15 +10,14 @@ MENTAL MODEL:
 
   The `config_by_name` dict at the bottom acts as the lookup table that
   create_app() uses to select the right class based on the environment name.
-─────────────────────────────────────────────────────────────────────────────
+
 """
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
 
 # Load .env file variables into os.environ before anything reads them.
-# In production (Render), env vars are set via the dashboard — load_dotenv()
-# safely does nothing if no .env file is present.
+
 load_dotenv()
 
 
@@ -74,8 +72,7 @@ class Config:
     )
 
     # The migration URL is read in the CLI context (flask db commands).
-    # If not set, it falls back to the main DATABASE_URL — this is fine
-    # for local development where you connect directly to local Postgres.
+    # If not set, it falls back to the main DATABASE_URL 
     MIGRATION_DATABASE_URL = os.getenv(
         "MIGRATION_DATABASE_URL",
         SQLALCHEMY_DATABASE_URI  # safe fallback for local dev
@@ -118,7 +115,7 @@ class Config:
     # Print all SQL queries to the console. Useful in dev, off in production.
     SQLALCHEMY_ECHO = False
 
-    # ─── JWT (JSON Web Tokens) ───────────────────────────────────────────────
+    # JWT (JSON Web Tokens) 
     # WHY JWT_SECRET_KEY IS SEPARATE FROM SECRET_KEY:
     #   If you use the same key for both Flask sessions and JWTs, a compromise
     #   of one compromises both. Separation of concerns is a security principle.
@@ -135,7 +132,7 @@ class Config:
     JWT_HEADER_NAME = "Authorization"
     JWT_HEADER_TYPE = "Bearer"
 
-    # ─── CORS (Cross-Origin Resource Sharing) ────────────────────────────────
+    # CORS (Cross-Origin Resource Sharing)
     # WHY THIS MATTERS:
     #   Browsers block requests from one domain (React on Vercel) to a different
     #   domain (Flask on Render) by default — this is the Same-Origin Policy.
@@ -144,12 +141,12 @@ class Config:
     CORS_ORIGINS = os.getenv("FRONTEND_URL", "http://localhost:3000")
     CORS_SUPPORTS_CREDENTIALS = True
 
-    # ─── Email (SendGrid) ────────────────────────────────────────────────────
+    #  Email (SendGrid) 
     SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
     MAIL_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL", "noreply@farmart.co.ke")
     MAIL_FROM_NAME = "Farmart"
 
-    # ─── Cloudinary ──────────────────────────────────────────────────────────
+    #  Cloudinary 
     CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME", "")
     CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY", "")
     CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET", "")
@@ -158,11 +155,11 @@ class Config:
     # This keeps storage costs down and page loads fast.
     CLOUDINARY_MAX_WIDTH = 1200
 
-    # ─── Pagination defaults ─────────────────────────────────────────────────
+    #  Pagination defaults 
     DEFAULT_PAGE_SIZE = 20
     MAX_PAGE_SIZE = 100
 
-    # ─── File Upload limits ──────────────────────────────────────────────────
+    #  File Upload limits 
     MAX_CONTENT_LENGTH = 25 * 1024 * 1024  # 25 MB max per request
     ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
     MAX_IMAGES_PER_ANIMAL = 5
@@ -246,7 +243,7 @@ class ProductionConfig(Config):
             )
 
 
-# ─── Config lookup table ─────────────────────────────────────────────────────
+#  Config lookup table 
 # create_app() receives a string like "development" and looks up the right
 # class here. This is the only place you need to register a new config.
 config_by_name = {

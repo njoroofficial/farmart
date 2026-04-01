@@ -1,7 +1,7 @@
 """
 app/routes/animals.py
 
-Animals Blueprint — marketplace listing endpoints.
+Animals Blueprint 
 
 ENDPOINTS:
   GET    /api/v1/animals              List animals (public, with filters + pagination)
@@ -12,7 +12,7 @@ ENDPOINTS:
   POST   /api/v1/animals/:id/images   Add more images to a listing (farmer, owner)
   DELETE /api/v1/animals/:id/images/:image_id  Delete a specific image
 
-THE UPLOAD + DATABASE WRITE SEQUENCE (see image_service.py for full rationale):
+THE UPLOAD + DATABASE WRITE SEQUENCE:
   1. Validate all request fields and files — zero side effects on failure
   2. Upload all images to Cloudinary — compensate (delete uploads) on failure
   3. Write Animal + AnimalImages to database — compensate (delete uploads) on failure
