@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 cart_bp = Blueprint("cart", __name__)
 
 
-# ─── GET /cart 
+# ─── GET /cart
 
 @cart_bp.route("", methods=["GET"])
 @buyer_required
@@ -50,7 +50,7 @@ def get_cart():
     a cart object, never an error on first visit.
     """
     buyer = g.current_user
-    cart  = Cart.get_or_create(buyer.id)
+    cart = Cart.get_or_create(buyer.id)
     db.session.commit()  # Persist the cart if it was just created
 
     cart_data = cart.to_dict()
@@ -63,7 +63,7 @@ def get_cart():
         if item.get("animal")
     )
     cart_data["has_unavailable_items"] = has_unavailable
-    cart_data["checkout_ready"]        = not has_unavailable and cart.item_count > 0
+    cart_data["checkout_ready"] = not has_unavailable and cart.item_count > 0
 
     return success_response(
         data=cart_data,
@@ -71,7 +71,7 @@ def get_cart():
     )
 
 
-# ─── POST /cart/items 
+# ─── POST /cart/items
 
 @cart_bp.route("/items", methods=["POST"])
 @buyer_required
@@ -89,8 +89,8 @@ def add_to_cart():
     filling your cart and discovering at checkout that half the items were
     already sold.
     """
-    buyer     = g.current_user
-    data      = request.get_json()
+    buyer = g.current_user
+    data = request.get_json()
     animal_id = (data or {}).get("animal_id", "").strip()
 
     if not animal_id:
@@ -112,7 +112,7 @@ def add_to_cart():
             "You cannot add your own listing to your cart.", 400
         )
 
-    cart     = Cart.get_or_create(buyer.id)
+    cart = Cart.get_or_create(buyer.id)
     existing = CartItem.query.filter_by(
         cart_id=cart.id, animal_id=animal_id
     ).first()
@@ -138,7 +138,7 @@ def add_to_cart():
     )
 
 
-# ─── DELETE /cart/items/:animal_id 
+# ─── DELETE /cart/items/:animal_id
 
 @cart_bp.route("/items/<string:animal_id>", methods=["DELETE"])
 @buyer_required
@@ -152,7 +152,7 @@ def remove_from_cart(animal_id: str):
     rather than "delete cart item #xyz".
     """
     buyer = g.current_user
-    cart  = Cart.query.filter_by(buyer_id=buyer.id).first()
+    cart = Cart.query.filter_by(buyer_id=buyer.id).first()
 
     if not cart:
         return error_response("Cart not found.", 404)
@@ -166,7 +166,7 @@ def remove_from_cart(animal_id: str):
     try:
         db.session.delete(item)
         db.session.commit()
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return error_response("Failed to remove item.", 500)
 
@@ -179,7 +179,7 @@ def remove_from_cart(animal_id: str):
     )
 
 
-# ─── DELETE /cart 
+# ─── DELETE /cart
 
 @cart_bp.route("", methods=["DELETE"])
 @buyer_required
@@ -193,7 +193,7 @@ def clear_cart():
     to it.
     """
     buyer = g.current_user
-    cart  = Cart.query.filter_by(buyer_id=buyer.id).first()
+    cart = Cart.query.filter_by(buyer_id=buyer.id).first()
 
     if not cart or cart.item_count == 0:
         return success_response(message="Cart is already empty.")
@@ -201,7 +201,7 @@ def clear_cart():
     try:
         CartItem.query.filter_by(cart_id=cart.id).delete()
         db.session.commit()
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return error_response("Failed to clear cart.", 500)
 

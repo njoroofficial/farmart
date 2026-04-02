@@ -46,6 +46,7 @@ logger = logging.getLogger(__name__)
 
 # ─── Result types ─────────────────────────────────────────────────────────────
 
+
 @dataclass
 class UploadedImage:
     """
@@ -82,7 +83,7 @@ def _allowed_extension(filename: str) -> bool:
     if "." not in filename:
         return False
     ext = filename.rsplit(".", 1)[1].lower()
-    return ext in current_app.config.get("ALLOWED_IMAGE_EXTENSIONS", {"jpg","jpeg","png","webp"})
+    return ext in current_app.config.get("ALLOWED_IMAGE_EXTENSIONS", {"jpg", "jpeg", "png", "webp"})
 
 
 def _resize_image(file_bytes: bytes, max_width: int = 1200) -> bytes:
@@ -119,7 +120,7 @@ def _resize_image(file_bytes: bytes, max_width: int = 1200) -> bytes:
 
     if original_width > max_width:
         # Calculate the proportional height for the new width
-        ratio  = max_width / original_width
+        ratio = max_width / original_width
         new_height = int(original_height * ratio)
         img = img.resize((max_width, new_height), Image.LANCZOS)
         logger.debug(
@@ -158,7 +159,7 @@ def _upload_single(
       immediately after upload.
     """
     max_width = current_app.config.get("CLOUDINARY_MAX_WIDTH", 1200)
-    resized   = _resize_image(image_bytes, max_width=max_width)
+    resized = _resize_image(image_bytes, max_width=max_width)
 
     result = cloudinary.uploader.upload(
         resized,
@@ -264,7 +265,7 @@ def upload_animal_images(files: list) -> UploadResult:
 
             return UploadResult(
                 success=False,
-                error=f"Image upload failed. Please check your files and try again.",
+                error="Image upload failed. Please check your files and try again.",
             )
 
     return UploadResult(success=True, images=uploaded)
@@ -291,7 +292,7 @@ def delete_images_by_public_ids(public_ids: List[str]) -> bool:
         return True
 
     try:
-        result = cloudinary.uploader.destroy(public_ids[0]) if len(public_ids) == 1 \
+        cloudinary.uploader.destroy(public_ids[0]) if len(public_ids) == 1 \
             else cloudinary.api.delete_resources(public_ids)
         logger.info(f"Deleted {len(public_ids)} image(s) from Cloudinary.")
         return True

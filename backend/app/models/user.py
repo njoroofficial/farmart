@@ -13,7 +13,7 @@ THE PROXY PATTERN IN PRACTICE:
 
   The relationship is always: User has one FarmerProfile OR one BuyerProfile,
   never both. This is enforced by the UNIQUE constraint on user_id in each
-  profile table. 
+  profile table.
 
 """
 import secrets
@@ -26,7 +26,7 @@ from app.extensions import db
 from app.models.base import BaseModel
 
 
-# ─── Role and Token Type Constants 
+# ─── Role and Token Type Constants
 # We use plain class attributes rather than Python's enum.Enum because
 # SQLAlchemy's SAEnum maps these strings directly to a Postgres ENUM type,
 # which means the database itself enforces valid values — you cannot insert
@@ -34,18 +34,18 @@ from app.models.base import BaseModel
 
 class UserRole:
     FARMER = "farmer"
-    BUYER  = "buyer"
-    ADMIN  = "admin"
-    ALL    = ["farmer", "buyer", "admin"]
+    BUYER = "buyer"
+    ADMIN = "admin"
+    ALL = ["farmer", "buyer", "admin"]
 
 
 class TokenType:
     EMAIL_VERIFICATION = "email_verification"
-    PASSWORD_RESET     = "password_reset"
-    ALL                = ["email_verification", "password_reset"]
+    PASSWORD_RESET = "password_reset"
+    ALL = ["email_verification", "password_reset"]
 
 
-# ─── User Model 
+# ─── User Model
 
 class User(BaseModel):
     """
@@ -57,31 +57,31 @@ class User(BaseModel):
     PASSWORD HASHING:
       We never store passwords — we store a bcrypt hash of the password.
       bcrypt is a one-way function: given "Secure@123" it produces a hash
-      that cannot be reversed. 
+      that cannot be reversed.
 
     """
     __tablename__ = "users"
 
-    email         = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    # We store the hash, never the plain password. 
+    email = db.Column(db.String(255), unique=True, nullable=False, index=True)
+    # We store the hash, never the plain password.
     password_hash = db.Column(db.String(255), nullable=False)
-    role          = db.Column(
+    role = db.Column(
         SAEnum(*UserRole.ALL, name="user_role_enum"),
         nullable=False,
     )
-    first_name    = db.Column(db.String(100), nullable=False)
-    last_name     = db.Column(db.String(100), nullable=False)
+    first_name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=False)
     # phone_number is unique but nullable — not all users provide it on signup.
-    phone_number  = db.Column(db.String(20), unique=True, nullable=True, index=True)
+    phone_number = db.Column(db.String(20), unique=True, nullable=True, index=True)
     # is_verified is the gate enforcing 2-step auth. A freshly registered
     # user has is_verified=False and cannot log in until they click the
     # verification link we email them.
-    is_verified   = db.Column(db.Boolean, default=False, nullable=False)
-    is_active     = db.Column(db.Boolean, default=True,  nullable=False)
+    is_verified = db.Column(db.Boolean, default=False, nullable=False)
+    is_active = db.Column(db.Boolean, default=True,  nullable=False)
 
-    # ── Relationships 
+    # ── Relationships
     # uselist=False tells SQLAlchemy this is a one-to-one relationship,
-    # not one-to-many. 
+    # not one-to-many.
     # cascade="all, delete-orphan" means if a User is deleted, their profile
     # row is automatically deleted too.
     # lazy="select" means the profile is loaded in a separate query only
@@ -107,7 +107,7 @@ class User(BaseModel):
         lazy="dynamic",  # "dynamic" returns a query object, not a loaded list.
     )                    # Efficient when you only ever need the latest token.
 
-    # ── Password methods 
+    # ── Password methods
 
     def set_password(self, plain_password: str) -> None:
         """
@@ -119,7 +119,7 @@ class User(BaseModel):
         when verifying. We encode to bytes and decode back to string because
         bcrypt operates on bytes but we store strings in the database.
         """
-        salt   = bcrypt.gensalt(rounds=12)
+        salt = bcrypt.gensalt(rounds=12)
         hashed = bcrypt.hashpw(plain_password.encode("utf-8"), salt)
         self.password_hash = hashed.decode("utf-8")
 
@@ -137,7 +137,7 @@ class User(BaseModel):
             self.password_hash.encode("utf-8"),
         )
 
-    # ── Convenience properties 
+    # ── Convenience properties
 
     @property
     def full_name(self) -> str:
@@ -185,7 +185,7 @@ class User(BaseModel):
             data["profile"] = self.profile.to_dict()
         return data
 
-    # ── Class-level query helpers 
+    # ── Class-level query helpers
 
     @classmethod
     def find_by_email(cls, email: str):
@@ -200,7 +200,7 @@ class User(BaseModel):
         return cls.query.filter_by(id=user_id, is_active=True).first()
 
 
-# ─── Farmer Profile 
+# ─── Farmer Profile
 
 class FarmerProfile(BaseModel):
     """
@@ -223,9 +223,9 @@ class FarmerProfile(BaseModel):
         unique=True,
         nullable=False,
     )
-    farm_name     = db.Column(db.String(200), nullable=False)
+    farm_name = db.Column(db.String(200), nullable=False)
     farm_location = db.Column(db.String(200), nullable=False)
-    bio           = db.Column(db.Text, nullable=True)
+    bio = db.Column(db.Text, nullable=True)
 
     user = db.relationship("User", back_populates="farmer_profile")
 
@@ -267,11 +267,13 @@ class BuyerProfile(BaseModel):
             "id":                       self.id,
             "user_id":                  self.user_id,
             "default_delivery_address": self.default_delivery_address,
-            "created_at":               self.created_at.strftime("%d %b %Y") if self.created_at else None,
+            "created_at": (
+                self.created_at.strftime("%d %b %Y") if self.created_at else None
+            ),
         }
 
 
-# ─── Verification Token 
+# ─── Verification Token
 
 class VerificationToken(BaseModel):
     """
@@ -309,7 +311,7 @@ class VerificationToken(BaseModel):
         nullable=False,
     )
     expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
-    is_used    = db.Column(db.Boolean, default=False, nullable=False)
+    is_used = db.Column(db.Boolean, default=False, nullable=False)
 
     user = db.relationship("User", back_populates="verification_tokens")
 

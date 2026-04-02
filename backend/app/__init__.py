@@ -48,12 +48,12 @@ def create_app(config_name: str = None) -> Flask:
     if config_name is None:
         config_name = os.getenv("FLASK_ENV", "development")
 
-    # 2. Create the Flask app object 
+    # 2. Create the Flask app object
     # __name__ tells Flask where to look for templates and static files.
     # Since we don't serve HTML (pure API), this is mostly a convention.
     app = Flask(__name__)
 
-    # 3. Load configuration 
+    # 3. Load configuration
     # from_object() reads all uppercase attributes from the config class
     # and sets them as Flask config values. That's why all config keys
     # are UPPERCASE in config.py — Flask only reads uppercase keys.
@@ -77,7 +77,7 @@ def create_app(config_name: str = None) -> Flask:
         supports_credentials=app.config["CORS_SUPPORTS_CREDENTIALS"],
     )
 
-    # 5. Import models 
+    # 5. Import models
     # Flask-Migrate needs to "see" all models to generate migration scripts.
     # We import them here inside the factory to ensure they register with db
     # in the context of this app. The imports themselves trigger the class
@@ -87,7 +87,7 @@ def create_app(config_name: str = None) -> Flask:
     with app.app_context():
         from app.models import user, animal, cart, payment  # noqa: F401
 
-    # 6. Configure Cloudinary 
+    # 6. Configure Cloudinary
     # Cloudinary uses a global configuration pattern rather than Flask's
     # init_app pattern. We call it inside create_app so it reads from
     # whichever app.config is active (dev keys vs production keys).
@@ -98,7 +98,7 @@ def create_app(config_name: str = None) -> Flask:
         secure=True,  # Always use HTTPS URLs for images
     )
 
-    # 7. Register custom CLI commands 
+    # 7. Register custom CLI commands
     # Our custom `flask db-upgrade`, `flask db-migrate`, and `flask check-db`
     # commands live in cli.py. They wrap Flask-Migrate's standard commands
     # but force the use of MIGRATION_DATABASE_URL (the direct Supabase
@@ -106,7 +106,7 @@ def create_app(config_name: str = None) -> Flask:
     from app.cli import register_cli_commands
     register_cli_commands(app)
 
-    # 8. Register blueprints 
+    # 8. Register blueprints
     # Blueprints are Flask's way of grouping related routes into modules.
     # Each domain (auth, animals, orders…) is its own Blueprint.
     # We pass url_prefix so every auth route starts with /api/v1/auth, etc.
@@ -117,13 +117,13 @@ def create_app(config_name: str = None) -> Flask:
     #   (mobile apps that haven't updated) keep working on v1.
     _register_blueprints(app)
 
-    # ── 8. Register error handlers 
+    # ── 8. Register error handlers
     # Centralised error handling means we never return raw Flask HTML error
     # pages from a JSON API. Every error — 404, 422, 500 — returns a
     # consistent JSON envelope that the frontend can reliably parse.
     _register_error_handlers(app)
 
-    # ── 9. Register the health check endpoint 
+    # ── 9. Register the health check endpoint
     # A health check is a simple endpoint that returns 200 OK when the app
     # is running. Render uses this to know your deployment succeeded.
     # GitHub Actions can ping it after deployment to confirm the service is up.

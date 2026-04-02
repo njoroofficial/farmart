@@ -34,16 +34,16 @@ from app.extensions import db
 from app.models.base import BaseModel
 
 
-#  Status constants 
+#  Status constants
 
 class AnimalStatus:
     AVAILABLE = "available"
-    RESERVED  = "reserved"
-    SOLD      = "sold"
-    ALL       = ["available", "reserved", "sold"]
+    RESERVED = "reserved"
+    SOLD = "sold"
+    ALL = ["available", "reserved", "sold"]
 
 
-# Animal Type 
+# Animal Type
 class AnimalType(BaseModel):
     """
     Reference table for animal categories — Cattle, Goat, Sheep, Pig, etc.
@@ -58,11 +58,11 @@ class AnimalType(BaseModel):
     """
     __tablename__ = "animal_types"
 
-    name        = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=True)
 
-    breeds  = db.relationship("Breed",  back_populates="animal_type",
-                               cascade="all, delete-orphan", lazy="select")
+    breeds = db.relationship("Breed", back_populates="animal_type",
+                             cascade="all, delete-orphan", lazy="select")
     animals = db.relationship("Animal", back_populates="animal_type", lazy="dynamic")
 
     def to_dict(self) -> dict:
@@ -79,7 +79,7 @@ class AnimalType(BaseModel):
         ).first()
 
 
-#  Breed 
+#  Breed
 
 class Breed(BaseModel):
     """
@@ -101,11 +101,11 @@ class Breed(BaseModel):
         nullable=False,
         index=True,
     )
-    name        = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
 
     animal_type = db.relationship("AnimalType", back_populates="breeds")
-    animals     = db.relationship("Animal", back_populates="breed", lazy="dynamic")
+    animals = db.relationship("Animal", back_populates="breed", lazy="dynamic")
 
     def to_dict(self) -> dict:
         return {
@@ -116,7 +116,7 @@ class Breed(BaseModel):
         }
 
 
-#  Animal 
+#  Animal
 
 class Animal(BaseModel):
     """
@@ -127,7 +127,7 @@ class Animal(BaseModel):
     """
     __tablename__ = "animals"
 
-    farmer_id      = db.Column(
+    farmer_id = db.Column(
         db.String(36),
         db.ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
@@ -139,29 +139,29 @@ class Animal(BaseModel):
         nullable=False,
         index=True,
     )
-    breed_id       = db.Column(
+    breed_id = db.Column(
         db.String(36),
         db.ForeignKey("breeds.id"),
         nullable=False,
         index=True,
     )
-    name           = db.Column(db.String(200), nullable=False)
-    age_months     = db.Column(db.Integer, nullable=False)
-    weight_kg      = db.Column(db.Numeric(8, 2), nullable=True)
-    price          = db.Column(db.Numeric(10, 2), nullable=False)
-    description    = db.Column(db.Text, nullable=True)
-    status         = db.Column(
+    name = db.Column(db.String(200), nullable=False)
+    age_months = db.Column(db.Integer, nullable=False)
+    weight_kg = db.Column(db.Numeric(8, 2), nullable=True)
+    price = db.Column(db.Numeric(10, 2), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    status = db.Column(
         SAEnum(*AnimalStatus.ALL, name="animal_status_enum"),
         default=AnimalStatus.AVAILABLE,
         nullable=False,
         index=True,
     )
 
-    #  Relationships 
-    farmer      = db.relationship("User",       foreign_keys=[farmer_id], lazy="select")
+    #  Relationships
+    farmer = db.relationship("User",       foreign_keys=[farmer_id], lazy="select")
     animal_type = db.relationship("AnimalType", back_populates="animals", lazy="select")
-    breed       = db.relationship("Breed",      back_populates="animals", lazy="select")
-    images      = db.relationship(
+    breed = db.relationship("Breed",      back_populates="animals", lazy="select")
+    images = db.relationship(
         "AnimalImage",
         back_populates="animal",
         cascade="all, delete-orphan",
@@ -169,7 +169,7 @@ class Animal(BaseModel):
         order_by="AnimalImage.is_primary.desc()",  # Primary image always first
     )
 
-    #  Computed properties 
+    #  Computed properties
 
     @property
     def primary_image_url(self) -> str | None:
@@ -184,7 +184,7 @@ class Animal(BaseModel):
     def is_available(self) -> bool:
         return self.status == AnimalStatus.AVAILABLE
 
-    #  Serialisation 
+    #  Serialisation
 
     def to_dict(self, include_farmer: bool = False) -> dict:
         """
@@ -224,7 +224,7 @@ class Animal(BaseModel):
 
         return data
 
-    #  Query helpers 
+    #  Query helpers
 
     @classmethod
     def build_list_query(cls, filters: dict):
@@ -289,7 +289,7 @@ class Animal(BaseModel):
         return query
 
 
-#  Animal Image 
+#  Animal Image
 
 class AnimalImage(BaseModel):
     """
@@ -310,15 +310,15 @@ class AnimalImage(BaseModel):
     """
     __tablename__ = "animal_images"
 
-    animal_id             = db.Column(
+    animal_id = db.Column(
         db.String(36),
         db.ForeignKey("animals.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    cloudinary_public_id  = db.Column(db.String(500), nullable=False)
-    cloudinary_url        = db.Column(db.String(1000), nullable=False)
-    is_primary            = db.Column(db.Boolean, default=False, nullable=False)
+    cloudinary_public_id = db.Column(db.String(500), nullable=False)
+    cloudinary_url = db.Column(db.String(1000), nullable=False)
+    is_primary = db.Column(db.Boolean, default=False, nullable=False)
 
     animal = db.relationship("Animal", back_populates="images")
 

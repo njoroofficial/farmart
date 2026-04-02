@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 reference_bp = Blueprint("reference", __name__)
 
 
-# ─── GET /animal-types 
+# ─── GET /animal-types
 
 @reference_bp.route("/animal-types", methods=["GET"])
 def list_animal_types():
@@ -50,7 +50,7 @@ def list_animal_types():
     )
 
 
-# ─── POST /animal-types 
+# ─── POST /animal-types
 
 @reference_bp.route("/animal-types", methods=["POST"])
 @admin_required
@@ -91,7 +91,7 @@ def create_animal_type():
     )
 
 
-# ─── GET /animal-types/:id/breeds 
+# ─── GET /animal-types/:id/breeds
 
 @reference_bp.route("/animal-types/<string:type_id>/breeds", methods=["GET"])
 def list_breeds_for_type(type_id: str):
@@ -117,7 +117,7 @@ def list_breeds_for_type(type_id: str):
     )
 
 
-# ─── POST /breeds 
+# ─── POST /breeds
 
 @reference_bp.route("/breeds", methods=["POST"])
 @admin_required
@@ -133,7 +133,7 @@ def create_breed():
         return error_response("Request body must be JSON.", 400)
 
     animal_type_id = data.get("animal_type_id", "").strip()
-    name           = data.get("name", "").strip().title()
+    name = data.get("name", "").strip().title()
 
     if not animal_type_id:
         return error_response("animal_type_id is required.", 422)
@@ -173,7 +173,7 @@ def create_breed():
     )
 
 
-# ─── DELETE /breeds/:id 
+# ─── DELETE /breeds/:id
 
 @reference_bp.route("/breeds/<string:breed_id>", methods=["DELETE"])
 @admin_required
@@ -205,7 +205,7 @@ def delete_breed(breed_id: str):
     try:
         db.session.delete(breed)
         db.session.commit()
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return error_response("Failed to delete breed.", 500)
 

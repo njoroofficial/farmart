@@ -27,7 +27,7 @@ from flask_cors import CORS
 import cloudinary
 
 
-# ─── Database 
+# ─── Database
 
 db = SQLAlchemy()
 
@@ -36,18 +36,18 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 
-# ─── Authentication 
+# ─── Authentication
 # JWTManager adds JWT creation and verification to Flask.
 
 jwt = JWTManager()
 
 
-# ─── CORS 
+# ─── CORS
 # CORS enables our React frontend (on a different domain) to call our API.
 
 cors = CORS()
 
 
-# ─── Cloudinary 
+# ─── Cloudinary
 
 cloudinary = cloudinary

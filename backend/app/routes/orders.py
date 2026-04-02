@@ -55,7 +55,7 @@ logger = logging.getLogger(__name__)
 orders_bp = Blueprint("orders", __name__)
 
 
-# ─── POST /orders  (Checkout) 
+# ─── POST /orders  (Checkout)
 
 @orders_bp.route("/orders", methods=["POST"])
 @buyer_required
@@ -77,7 +77,7 @@ def checkout():
       using with_for_update() locking, the second buyer gets a 409.
     """
     buyer = g.current_user
-    data  = request.get_json() or {}
+    data = request.get_json() or {}
 
     delivery_address = data.get("delivery_address", "").strip()
     if not delivery_address:
@@ -100,7 +100,7 @@ def checkout():
         # with_for_update() translates to SELECT ... FOR UPDATE in PostgreSQL,
         # which holds a row-level lock until the transaction commits or rolls back.
         animal_ids = [item.animal_id for item in cart.items]
-        animals    = Animal.query.filter(
+        animals = Animal.query.filter(
             Animal.id.in_(animal_ids)
         ).with_for_update().all()
 
@@ -182,15 +182,15 @@ def checkout():
     )
 
 
-# ─── GET /orders  (Buyer: list) 
+# ─── GET /orders  (Buyer: list)
 
 @orders_bp.route("/orders", methods=["GET"])
 @buyer_required
 def list_buyer_orders():
     """List the authenticated buyer's orders, most recent first."""
-    buyer       = g.current_user
+    buyer = g.current_user
     page, per_page = get_pagination_params()
-    status      = request.args.get("status")
+    status = request.args.get("status")
 
     query = Order.query.filter_by(buyer_id=buyer.id)
     if status and status in OrderStatus.ALL:
@@ -206,7 +206,7 @@ def list_buyer_orders():
     )
 
 
-# ─── GET /orders/:id  (Buyer: detail) 
+# ─── GET /orders/:id  (Buyer: detail)
 
 @orders_bp.route("/orders/<string:order_id>", methods=["GET"])
 @buyer_required
@@ -223,7 +223,7 @@ def get_buyer_order(order_id: str):
     return success_response(data=order.to_dict(), message="Order retrieved.")
 
 
-# ─── GET /farmer/orders  (Farmer: list) 
+# ─── GET /farmer/orders  (Farmer: list)
 
 @orders_bp.route("/farmer/orders", methods=["GET"])
 @farmer_required
@@ -234,9 +234,9 @@ def list_farmer_orders():
     A farmer sees orders that include their animals — not all orders on the
     platform. We join through OrderItem → Animal to find relevant orders.
     """
-    farmer      = g.current_user
+    farmer = g.current_user
     page, per_page = get_pagination_params()
-    status      = request.args.get("status")
+    status = request.args.get("status")
 
     query = Order.query.join(OrderItem).join(Animal).filter(
         Animal.farmer_id == farmer.id
@@ -254,7 +254,7 @@ def list_farmer_orders():
     )
 
 
-# ─── GET /farmer/orders/:id  (Farmer: detail) 
+# ─── GET /farmer/orders/:id  (Farmer: detail)
 
 @orders_bp.route("/farmer/orders/<string:order_id>", methods=["GET"])
 @farmer_required
@@ -266,7 +266,7 @@ def get_farmer_order(order_id: str):
     returning it — a farmer should never see orders for other farmers' animals.
     """
     farmer = g.current_user
-    order  = Order.query.get(order_id)
+    order = Order.query.get(order_id)
 
     if not order:
         return error_response("Order not found.", 404)
@@ -286,7 +286,7 @@ def get_farmer_order(order_id: str):
     )
 
 
-# ─── PATCH /farmer/orders/:id/confirm 
+# ─── PATCH /farmer/orders/:id/confirm
 
 @orders_bp.route("/farmer/orders/<string:order_id>/confirm", methods=["PATCH"])
 @farmer_required
@@ -300,7 +300,7 @@ def confirm_order(order_id: str):
     The buyer receives an email notification.
     """
     farmer = g.current_user
-    order  = Order.query.get(order_id)
+    order = Order.query.get(order_id)
 
     if not order:
         return error_response("Order not found.", 404)
@@ -323,14 +323,13 @@ def confirm_order(order_id: str):
         order.status = OrderStatus.CONFIRMED
         db.session.commit()
         logger.info(f"Order {order_id} confirmed by farmer {farmer.id}")
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return error_response("Failed to confirm order.", 500)
 
     # Notify buyer
     try:
         from app.services.email_service import _build_mail, _send
-        from flask import current_app
         html = f"""
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px">
           <h1 style="color:#1B4332">Order confirmed</h1>
@@ -350,7 +349,7 @@ def confirm_order(order_id: str):
     )
 
 
-# ─── PATCH /farmer/orders/:id/reject 
+# ─── PATCH /farmer/orders/:id/reject
 
 @orders_bp.route("/farmer/orders/<string:order_id>/reject", methods=["PATCH"])
 @farmer_required
@@ -363,7 +362,7 @@ def reject_order(order_id: str):
     can purchase them. The buyer receives an email explaining the rejection.
     """
     farmer = g.current_user
-    order  = Order.query.get(order_id)
+    order = Order.query.get(order_id)
 
     if not order:
         return error_response("Order not found.", 404)
@@ -381,7 +380,7 @@ def reject_order(order_id: str):
             f"This order cannot be rejected — current status is '{order.status}'.", 400
         )
 
-    data   = request.get_json() or {}
+    data = request.get_json() or {}
     reason = data.get("reason", "").strip() or "No reason provided."
 
     try:
@@ -395,7 +394,7 @@ def reject_order(order_id: str):
 
         db.session.commit()
         logger.info(f"Order {order_id} rejected by farmer {farmer.id}. Reason: {reason}")
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return error_response("Failed to reject order.", 500)
 
@@ -405,7 +404,8 @@ def reject_order(order_id: str):
         html = f"""
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px">
           <h1 style="color:#DC2626">Order update</h1>
-          <p>Hi {order.buyer.first_name}, unfortunately the farmer was unable to fulfill your order.</p>
+          <p>Hi {order.buyer.first_name}, unfortunately the farmer was unable
+          to fulfill your order.</p>
           <p><strong>Reason:</strong> {reason}</p>
           <p>The animals in your order are now available again for purchase.</p>
         </div>

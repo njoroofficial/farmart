@@ -1,6 +1,6 @@
 """
 
-Authentication Blueprint 
+Authentication Blueprint
 
 ENDPOINTS:
   POST   /api/v1/auth/register           Register a new farmer or buyer
@@ -22,10 +22,12 @@ PATTERN USED IN EVERY ROUTE:
 import re
 
 from flask import Blueprint, request
-from flask_jwt_extended import create_access_token, get_jwt_identity
+from flask_jwt_extended import create_access_token
 
 from app.extensions import db
-from app.models.user import User, UserRole, FarmerProfile, BuyerProfile, VerificationToken, TokenType
+from app.models.user import (
+    User, UserRole, FarmerProfile, BuyerProfile, VerificationToken, TokenType
+)
 from app.services.email_service import send_verification_email, send_password_reset_email
 from app.middleware.auth_middleware import verified_user_required
 from app.utils.response import success_response, error_response
@@ -105,7 +107,7 @@ def register():
         return error_response("Request body must be JSON.", 400)
 
     required = ["email", "password", "role", "first_name", "last_name"]
-    missing  = [f for f in required if not data.get(f, "").strip()]
+    missing = [f for f in required if not data.get(f, "").strip()]
     if missing:
         return error_response(
             "Missing required fields.",
@@ -113,12 +115,12 @@ def register():
             errors={f: ["This field is required."] for f in missing},
         )
 
-    email      = data["email"].strip().lower()
-    password   = data["password"]
-    role       = data["role"].strip().lower()
+    email = data["email"].strip().lower()
+    password = data["password"]
+    role = data["role"].strip().lower()
     first_name = data["first_name"].strip()
-    last_name  = data["last_name"].strip()
-    phone      = data.get("phone_number", "").strip() or None
+    last_name = data["last_name"].strip()
+    phone = data.get("phone_number", "").strip() or None
 
     # Collect all validation errors before returning so the user sees
     # everything wrong at once, not one error at a time.
@@ -264,11 +266,11 @@ def verify_email():
         )
 
     try:
-        token.consume()               # Mark token as used
-        token.user.is_verified = True # Unlock the user's account
+        token.consume()  # Mark token as used
+        token.user.is_verified = True  # Unlock the user's account
         db.session.add(token.user)
         db.session.commit()
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return error_response("Verification failed. Please try again.", 500)
 
@@ -294,7 +296,7 @@ def resend_verification():
         return error_response("Email address is required.", 400)
 
     email = data["email"].strip().lower()
-    user  = User.find_by_email(email)
+    user = User.find_by_email(email)
 
     # Always return success — don't reveal whether the email exists
     success_message = "If that email is registered and unverified, a new link has been sent."
@@ -339,7 +341,7 @@ def login():
     if not data:
         return error_response("Request body must be JSON.", 400)
 
-    email    = data.get("email", "").strip().lower()
+    email = data.get("email", "").strip().lower()
     password = data.get("password", "")
 
     if not email or not password:
@@ -419,7 +421,7 @@ def forgot_password():
         return error_response("Email address is required.", 400)
 
     email = data["email"].strip().lower()
-    user  = User.find_by_email(email)
+    user = User.find_by_email(email)
 
     safe_message = "If that email is registered, a password reset link has been sent."
 

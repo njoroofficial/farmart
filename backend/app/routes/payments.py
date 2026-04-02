@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 payments_bp = Blueprint("payments", __name__)
 
 
-# ─── POST /payments/initiate 
+# ─── POST /payments/initiate
 
 @payments_bp.route("/initiate", methods=["POST"])
 @buyer_required
@@ -70,9 +70,9 @@ def initiate_payment():
       order_id prevents duplicate payment records.
     """
     buyer = g.current_user
-    data  = request.get_json() or {}
+    data = request.get_json() or {}
 
-    order_id       = data.get("order_id", "").strip()
+    order_id = data.get("order_id", "").strip()
     payment_method = data.get("payment_method", "").strip().lower()
 
     if not order_id:
@@ -164,7 +164,7 @@ def _build_payment_initiation_response(payment: Payment, order: Order) -> dict:
     return base_data
 
 
-# ─── POST /payments/webhook 
+# ─── POST /payments/webhook
 
 @payments_bp.route("/webhook", methods=["POST"])
 def payment_webhook():
@@ -197,8 +197,8 @@ def payment_webhook():
     webhook_secret = current_app.config.get("PAYMENT_WEBHOOK_SECRET", "")
     if webhook_secret:
         gateway_signature = request.headers.get("X-Webhook-Signature", "")
-        raw_body          = request.get_data()
-        expected_sig      = hmac.new(
+        raw_body = request.get_data()
+        expected_sig = hmac.new(
             webhook_secret.encode(),
             raw_body,
             hashlib.sha256,
@@ -208,9 +208,9 @@ def payment_webhook():
             logger.warning("Webhook received with invalid signature — rejected.")
             return error_response("Invalid webhook signature.", 400)
 
-    data            = request.get_json()
+    data = request.get_json()
     transaction_ref = (data or {}).get("transaction_ref", "").strip()
-    gateway_status  = (data or {}).get("status", "").strip().lower()
+    gateway_status = (data or {}).get("status", "").strip().lower()
 
     if not transaction_ref:
         return error_response("transaction_ref is required.", 400)
@@ -232,7 +232,7 @@ def payment_webhook():
 
         if gateway_status == "success":
             payment.payment_status = PaymentStatus.SUCCESS
-            payment.paid_at        = datetime.now(timezone.utc)
+            payment.paid_at = datetime.now(timezone.utc)
 
             # Mark all animals in the order as 'sold'
             for item in payment.order.items:
@@ -247,7 +247,10 @@ def payment_webhook():
 
         else:
             payment.payment_status = PaymentStatus.FAILED
-            logger.info(f"Payment failed for order {payment.order_id}. Gateway status: {gateway_status}")
+            logger.info(
+                f"Payment failed for order {payment.order_id}. "
+                f"Gateway status: {gateway_status}"
+            )
 
         db.session.add(payment)
         db.session.commit()
@@ -262,7 +265,7 @@ def payment_webhook():
     return success_response(message="Webhook processed.")
 
 
-# ─── GET /payments/:order_id 
+# ─── GET /payments/:order_id
 
 @payments_bp.route("/<string:order_id>", methods=["GET"])
 @verified_user_required
@@ -274,7 +277,7 @@ def get_payment_status(order_id: str):
     or returning from a card checkout redirect. Both buyers (to track their
     payment) and farmers (to confirm payment received) can access this.
     """
-    user  = g.current_user
+    user = g.current_user
     order = Order.query.get(order_id)
 
     if not order:
@@ -283,7 +286,7 @@ def get_payment_status(order_id: str):
     # Access control: buyer who placed it, or farmer whose animal is in it
     from app.models.animal import Animal
     from app.models.order import OrderItem
-    is_buyer  = order.buyer_id == user.id
+    is_buyer = order.buyer_id == user.id
     is_farmer = OrderItem.query.join(Animal).filter(
         OrderItem.order_id == order_id,
         Animal.farmer_id == user.id,

@@ -1,7 +1,7 @@
 """
 app/routes/animals.py
 
-Animals Blueprint 
+Animals Blueprint
 
 ENDPOINTS:
   GET    /api/v1/animals              List animals (public, with filters + pagination)
@@ -28,11 +28,10 @@ from flask import Blueprint, request, g
 
 from app.extensions import db
 from app.models.animal import Animal, AnimalType, Breed, AnimalImage, AnimalStatus
-from app.middleware.auth_middleware import farmer_required, jwt_auth_required
+from app.middleware.auth_middleware import farmer_required
 from app.services.image_service import (
     upload_animal_images,
     delete_images_by_public_ids,
-    delete_animal_images,
 )
 from app.utils.response import success_response, error_response, build_pagination_meta
 from app.utils.pagination import get_pagination_params, paginate_query
@@ -114,8 +113,8 @@ def list_animals():
     # Parse numeric filters — invalid values are ignored rather than erroring,
     # because a buyer typing into a price range slider should not crash their
     # browsing experience if they type a letter accidentally.
-    for key, label in [("age_min","age_min"),("age_max","age_max"),
-                       ("price_min","price_min"),("price_max","price_max")]:
+    for key, label in [("age_min", "age_min"), ("age_max", "age_max"),
+                       ("price_min", "price_min"), ("price_max", "price_max")]:
         raw = request.args.get(key)
         if raw is not None:
             try:
@@ -123,7 +122,7 @@ def list_animals():
             except ValueError:
                 pass  # Invalid numeric filter is silently ignored
 
-    query          = Animal.build_list_query(filters)
+    query = Animal.build_list_query(filters)
     animals, total = paginate_query(query, page, per_page)
 
     return success_response(
@@ -188,7 +187,9 @@ def create_animal():
         if not breed:
             validation_errors["breed_id"] = ["Breed not found."]
         elif "animal_type_id" not in validation_errors and breed.animal_type_id != animal_type_id:
-            validation_errors["breed_id"] = ["This breed does not belong to the selected animal type."]
+            validation_errors["breed_id"] = [
+                "This breed does not belong to the selected animal type."
+            ]
 
     age_months, age_err = _parse_positive_int(form.get("age_months"), "Age (months)")
     if age_err:
@@ -468,9 +469,9 @@ def add_images(animal_id: str):
         return error_response("You do not have permission to modify this listing.", 403)
 
     from flask import current_app
-    max_images      = current_app.config.get("MAX_IMAGES_PER_ANIMAL", 5)
-    existing_count  = len(animal.images)
-    files           = [f for f in request.files.getlist("images") if f.filename != ""]
+    max_images = current_app.config.get("MAX_IMAGES_PER_ANIMAL", 5)
+    existing_count = len(animal.images)
+    files = [f for f in request.files.getlist("images") if f.filename != ""]
 
     if not files:
         return error_response("No image files provided.", 400)
@@ -541,7 +542,7 @@ def delete_image(animal_id: str, image_id: str):
             "Upload a replacement image first.", 400
         )
 
-    public_id  = image.cloudinary_public_id
+    public_id = image.cloudinary_public_id
     was_primary = image.is_primary
 
     try:

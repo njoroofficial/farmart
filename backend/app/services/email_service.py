@@ -44,7 +44,7 @@ def _send(mail: Mail) -> bool:
         return False
 
     try:
-        client   = _build_client()
+        client = _build_client()
         response = client.send(mail)
 
         if response.status_code in (200, 202):
@@ -77,7 +77,7 @@ def _build_mail(to_email: str, subject: str, html_body: str) -> Mail:
 
     """
     from_email = current_app.config["MAIL_FROM_EMAIL"]
-    from_name  = current_app.config.get("MAIL_FROM_NAME", "Farmart")
+    from_name = current_app.config.get("MAIL_FROM_NAME", "Farmart")
 
     return Mail(
         from_email=(from_email, from_name),
@@ -87,7 +87,7 @@ def _build_mail(to_email: str, subject: str, html_body: str) -> Mail:
     )
 
 
-# ─── Email: Verification 
+# ─── Email: Verification
 
 def send_verification_email(user, token_string: str) -> bool:
     """
@@ -97,7 +97,7 @@ def send_verification_email(user, token_string: str) -> bool:
     reads the token from the URL and calls POST /api/v1/auth/verify-email.
     """
     frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:3000")
-    verify_url   = f"{frontend_url}/verify-email?token={token_string}"
+    verify_url = f"{frontend_url}/verify-email?token={token_string}"
 
     html = f"""
     <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; padding: 24px;">
@@ -143,7 +143,7 @@ def send_password_reset_email(user, token_string: str) -> bool:
     attacker that a given email address is registered on the platform.
     """
     frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:3000")
-    reset_url    = f"{frontend_url}/reset-password?token={token_string}"
+    reset_url = f"{frontend_url}/reset-password?token={token_string}"
 
     html = f"""
     <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; padding: 24px;">
@@ -179,7 +179,7 @@ def send_password_reset_email(user, token_string: str) -> bool:
     return _send(mail)
 
 
-# ─── Email: Order Notification to Farmer 
+# ─── Email: Order Notification to Farmer
 
 def send_order_notification_to_farmer(farmer_user, order) -> bool:
     """
@@ -229,7 +229,7 @@ def send_order_notification_to_farmer(farmer_user, order) -> bool:
     return _send(mail)
 
 
-# ─── Email: Order Confirmation to Buyer 
+# ─── Email: Order Confirmation to Buyer
 
 def send_order_confirmation_to_buyer(buyer_user, order) -> bool:
     """

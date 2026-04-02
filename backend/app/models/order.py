@@ -33,9 +33,9 @@ from app.models.base import BaseModel
 
 
 class OrderStatus:
-    PENDING   = "pending"
+    PENDING = "pending"
     CONFIRMED = "confirmed"
-    REJECTED  = "rejected"
+    REJECTED = "rejected"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
     ALL = ["pending", "confirmed", "rejected", "completed", "cancelled"]
@@ -50,21 +50,21 @@ class Order(BaseModel):
     """Represents a buyer's purchase intent — created at checkout."""
     __tablename__ = "orders"
 
-    buyer_id         = db.Column(
+    buyer_id = db.Column(
         db.String(36),
         db.ForeignKey("users.id"),
         nullable=False,
         index=True,
     )
-    total_amount     = db.Column(db.Numeric(10, 2), nullable=False)
-    status           = db.Column(
+    total_amount = db.Column(db.Numeric(10, 2), nullable=False)
+    status = db.Column(
         SAEnum(*OrderStatus.ALL, name="order_status_enum"),
         default=OrderStatus.PENDING,
         nullable=False,
         index=True,
     )
     delivery_address = db.Column(db.String(300), nullable=False)
-    notes            = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
 
     buyer = db.relationship("User", foreign_keys=[buyer_id], lazy="select")
     items = db.relationship(
@@ -90,8 +90,12 @@ class Order(BaseModel):
             "item_count":       len(self.items),
             "items":            [item.to_dict() for item in self.items],
             "payment":          self.payment.to_dict() if self.payment else None,
-            "created_at":       self.created_at.strftime("%d %b %Y, %I:%M %p") if self.created_at else None,
-            "updated_at":       self.updated_at.strftime("%d %b %Y, %I:%M %p") if self.updated_at else None,
+            "created_at": (
+                self.created_at.strftime("%d %b %Y, %I:%M %p") if self.created_at else None
+            ),
+            "updated_at": (
+                self.updated_at.strftime("%d %b %Y, %I:%M %p") if self.updated_at else None
+            ),
         }
         if include_buyer and self.buyer:
             data["buyer"] = {
@@ -112,7 +116,7 @@ class OrderItem(BaseModel):
     """
     __tablename__ = "order_items"
 
-    order_id              = db.Column(
+    order_id = db.Column(
         db.String(36),
         db.ForeignKey("orders.id", ondelete="CASCADE"),
         nullable=False,
@@ -120,17 +124,17 @@ class OrderItem(BaseModel):
     )
     # SET NULL on delete: if the listing is deleted later, the order history
     # survives intact using the snapshot fields below.
-    animal_id             = db.Column(
+    animal_id = db.Column(
         db.String(36),
         db.ForeignKey("animals.id", ondelete="SET NULL"),
         nullable=True,
     )
     # These three snapshot fields are the financial record — immutable.
-    price_at_purchase     = db.Column(db.Numeric(10, 2), nullable=False)
-    animal_name_snapshot  = db.Column(db.String(200), nullable=False)
-    animal_type_snapshot  = db.Column(db.String(100), nullable=False)
+    price_at_purchase = db.Column(db.Numeric(10, 2), nullable=False)
+    animal_name_snapshot = db.Column(db.String(200), nullable=False)
+    animal_type_snapshot = db.Column(db.String(100), nullable=False)
 
-    order  = db.relationship("Order", back_populates="items")
+    order = db.relationship("Order", back_populates="items")
     animal = db.relationship("Animal", lazy="select")
 
     def to_dict(self) -> dict:

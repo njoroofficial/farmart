@@ -103,7 +103,7 @@ class CartItem(BaseModel):
         db.UniqueConstraint("cart_id", "animal_id", name="uq_cart_animal"),
     )
 
-    cart_id   = db.Column(
+    cart_id = db.Column(
         db.String(36),
         db.ForeignKey("carts.id", ondelete="CASCADE"),
         nullable=False,
@@ -115,7 +115,7 @@ class CartItem(BaseModel):
         nullable=False,
     )
 
-    cart   = db.relationship("Cart",   back_populates="items")
+    cart = db.relationship("Cart",   back_populates="items")
     animal = db.relationship("Animal", lazy="select")
 
     def to_dict(self) -> dict:
@@ -129,13 +129,19 @@ class CartItem(BaseModel):
                 "status":        self.animal.status,
                 "is_available":  self.animal.status == AnimalStatus.AVAILABLE,
                 "primary_image": self.animal.primary_image_url,
-                "animal_type":   self.animal.animal_type.to_dict() if self.animal.animal_type else None,
+                "animal_type": (
+                    self.animal.animal_type.to_dict() if self.animal.animal_type else None
+                ),
                 "breed":         self.animal.breed.to_dict() if self.animal.breed else None,
                 "farmer": {
-                    "farm_name":     self.animal.farmer.farmer_profile.farm_name
-                                     if self.animal.farmer and self.animal.farmer.farmer_profile else None,
-                    "farm_location": self.animal.farmer.farmer_profile.farm_location
-                                     if self.animal.farmer and self.animal.farmer.farmer_profile else None,
+                    "farm_name": (
+                        self.animal.farmer.farmer_profile.farm_name
+                        if self.animal.farmer and self.animal.farmer.farmer_profile else None
+                    ),
+                    "farm_location": (
+                        self.animal.farmer.farmer_profile.farm_location
+                        if self.animal.farmer and self.animal.farmer.farmer_profile else None
+                    ),
                 },
             }
         return {

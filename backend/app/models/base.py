@@ -25,7 +25,7 @@ class BaseModel(db.Model):
     """
     __abstract__ = True
 
-    # ── Primary Key 
+    # ── Primary Key
     # default=lambda: str(uuid.uuid4()) generates a new UUID every time a
     # new record is created. The lambda is important — if you wrote
     # default=str(uuid.uuid4()), Python would evaluate it ONCE at class
@@ -36,7 +36,7 @@ class BaseModel(db.Model):
         default=lambda: str(uuid.uuid4()),
     )
 
-    # ── Timestamps 
+    # ── Timestamps
     # timezone.utc ensures all timestamps are stored in UTC, not local time.
     # Always store UTC, convert to local time on the frontend.
     created_at = db.Column(
@@ -79,7 +79,7 @@ class BaseModel(db.Model):
         the API world (JSON). Every model gets a default implementation
         that reflects all column values. Individual models can override
         this to include related data or exclude sensitive fields.
-        
+
         """
         result = {}
         for column in self.__table__.columns:

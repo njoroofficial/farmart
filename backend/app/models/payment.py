@@ -35,32 +35,32 @@ from app.models.base import BaseModel
 class PaymentStatus:
     PENDING = "pending"
     SUCCESS = "success"
-    FAILED  = "failed"
-    ALL     = ["pending", "success", "failed"]
+    FAILED = "failed"
+    ALL = ["pending", "success", "failed"]
 
 
 class PaymentMethod:
     MPESA = "mpesa"
-    CARD  = "card"
-    ALL   = ["mpesa", "card"]
+    CARD = "card"
+    ALL = ["mpesa", "card"]
 
 
 class Payment(BaseModel):
     __tablename__ = "payments"
 
-    order_id        = db.Column(
+    order_id = db.Column(
         db.String(36),
         db.ForeignKey("orders.id"),
         unique=True,    # One payment record per order
         nullable=False,
         index=True,
     )
-    amount          = db.Column(db.Numeric(10, 2), nullable=False)
-    payment_method  = db.Column(
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    payment_method = db.Column(
         SAEnum(*PaymentMethod.ALL, name="payment_method_enum"),
         nullable=False,
     )
-    payment_status  = db.Column(
+    payment_status = db.Column(
         SAEnum(*PaymentStatus.ALL, name="payment_status_enum"),
         default=PaymentStatus.PENDING,
         nullable=False,
@@ -69,7 +69,7 @@ class Payment(BaseModel):
     transaction_ref = db.Column(db.String(200), unique=True, nullable=True)
     # The full gateway webhook payload stored as JSON for audit/debugging
     gateway_response = db.Column(db.JSON, nullable=True)
-    paid_at         = db.Column(db.DateTime(timezone=True), nullable=True)
+    paid_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     order = db.relationship("Order", back_populates="payment")
 
@@ -81,6 +81,10 @@ class Payment(BaseModel):
             "payment_method":   self.payment_method,
             "payment_status":   self.payment_status,
             "transaction_ref":  self.transaction_ref,
-            "paid_at":          self.paid_at.strftime("%d %b %Y, %I:%M %p") if self.paid_at else None,
-            "created_at":       self.created_at.strftime("%d %b %Y, %I:%M %p") if self.created_at else None,
+            "paid_at": (
+                self.paid_at.strftime("%d %b %Y, %I:%M %p") if self.paid_at else None
+            ),
+            "created_at": (
+                self.created_at.strftime("%d %b %Y, %I:%M %p") if self.created_at else None
+            ),
         }
