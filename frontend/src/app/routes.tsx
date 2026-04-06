@@ -1,6 +1,6 @@
 import { createBrowserRouter, Outlet } from "react-router";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+import { Navbar } from "./components/Navbar";
+import { Footer } from "./components/Footer";
 import { LandingPage } from "./pages/LandingPage";
 
 // Root layout with Navbar + Footer for public/buyer pages
