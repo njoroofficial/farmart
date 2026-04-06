@@ -180,6 +180,14 @@ class DevelopmentConfig(Config):
     # generates from your model queries. Invaluable for debugging N+1 problems.
     SQLALCHEMY_ECHO = True
 
+    # Allow both localhost and 127.0.0.1 variants for Vite's dev server.
+    CORS_ORIGINS = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
 
 class TestingConfig(Config):
     """
