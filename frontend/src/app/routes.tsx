@@ -4,6 +4,12 @@ import { Footer } from "./components/Footer";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { FarmerLayout } from "./pages/farmer/FarmerLayout";
+import { DashboardPage } from "./pages/farmer/DashboardPage";
+import { MyListingsPage } from "./pages/farmer/MyListingsPage";
+import { AddAnimalPage } from "./pages/farmer/AddAnimalPage";
+import { EditAnimalPage } from "./pages/farmer/EditAnimalPage";
+import { OrdersPage } from "./pages/farmer/OrdersPage";
 
 // Root layout with Navbar + Footer for public/buyer pages
 function PublicLayout() {
@@ -35,6 +41,17 @@ export const router = createBrowserRouter([
     children: [
       { path: "login", Component: LoginPage },
       { path: "register", Component: RegisterPage },
+    ],
+  },
+  {
+    path: "/farmer",
+    Component: FarmerLayout,
+    children: [
+      { path: "dashboard", Component: DashboardPage },
+      { path: "listings", Component: MyListingsPage },
+      { path: "listings/add", Component: AddAnimalPage },
+      { path: "listings/:id/edit", Component: EditAnimalPage },
+      { path: "orders", Component: OrdersPage },
     ],
   },
 ]);

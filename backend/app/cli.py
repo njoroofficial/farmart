@@ -40,6 +40,148 @@ def register_cli_commands(app):
     Called from create_app() after extensions are initialised.
     """
 
+    @app.cli.command("seed-reference-data")
+    @with_appcontext
+    def seed_reference_data():
+        """
+        Seed animal types and breeds into the database (idempotent).
+
+        Safe to run multiple times — existing records are left unchanged,
+        only missing ones are inserted.  Covers all common Kenyan livestock
+        categories plus an "Other" catch-all so farmers can always list any
+        animal even if the specific type is not yet in the catalogue.
+
+        Usage:
+          flask seed-reference-data
+        """
+        from app.models.animal import AnimalType, Breed
+
+        # ── Reference catalogue ────────────────────────────────────────────
+        # Structure: { "TypeName": ["Breed1", "Breed2", …] }
+        catalogue = {
+            "Cattle": [
+                "Friesian",
+                "Ayrshire",
+                "Jersey",
+                "Guernsey",
+                "Boran",
+                "Sahiwal",
+                "Zebu",
+                "Aberdeen Angus",
+                "Hereford",
+                "Crossbreed",
+            ],
+            "Goat": [
+                "Boer",
+                "Galla",
+                "East African",
+                "Toggenburg",
+                "Saanen",
+                "Kalahari Red",
+                "Anglo-Nubian",
+                "Alpine",
+                "Crossbreed",
+            ],
+            "Sheep": [
+                "Red Maasai",
+                "Dorper",
+                "Merino",
+                "Hampshire",
+                "Suffolk",
+                "Blackhead Persian",
+                "Romney Marsh",
+                "Crossbreed",
+            ],
+            "Pig": [
+                "Large White",
+                "Landrace",
+                "Duroc",
+                "Hampshire",
+                "Berkshire",
+                "Pietrain",
+                "Crossbreed",
+            ],
+            "Poultry": [
+                "Kienyeji (Local)",
+                "Improved Kienyeji",
+                "KARI Improved Kienyeji",
+                "Broiler",
+                "Layer (Leghorn)",
+                "Kenbro",
+                "Rainbow Rooster",
+                "Dual Purpose",
+                "Crossbreed",
+            ],
+            "Turkey": [
+                "Broad Breasted White",
+                "Bronze",
+                "Black",
+                "Bourbon Red",
+                "Royal Palm",
+                "Slate",
+                "Narragansett",
+                "Crossbreed",
+            ],
+            "Rabbit": [
+                "New Zealand White",
+                "Californian",
+                "Dutch",
+                "Flemish Giant",
+                "Angora",
+                "Rex",
+                "Kenya White",
+                "Chinchilla",
+                "Crossbreed",
+            ],
+            # Catch-all for any animal not covered above.
+            # Farmers who select "Other" on the frontend use this type + breed.
+            "Other": [
+                "Other/Mixed",
+            ],
+        }
+
+        types_created = 0
+        breeds_created = 0
+
+        for type_name, breed_names in catalogue.items():
+            # Get-or-create the animal type
+            animal_type = AnimalType.find_by_name(type_name)
+            if animal_type is None:
+                animal_type = AnimalType(name=type_name.title())
+                db.session.add(animal_type)
+                db.session.flush()  # get animal_type.id before inserting breeds
+                types_created += 1
+                click.echo(click.style(f"  + AnimalType: {type_name}", fg="green"))
+            else:
+                click.echo(f"  · AnimalType exists: {type_name}")
+
+            for breed_name in breed_names:
+                exists = Breed.query.filter_by(
+                    animal_type_id=animal_type.id,
+                    name=breed_name.title(),
+                ).first()
+                if exists is None:
+                    breed = Breed(
+                        animal_type_id=animal_type.id,
+                        name=breed_name.title(),
+                    )
+                    db.session.add(breed)
+                    breeds_created += 1
+
+        try:
+            db.session.commit()
+            click.echo(
+                click.style(
+                    f"\n✓ Done — {types_created} type(s) and "
+                    f"{breeds_created} breed(s) inserted.",
+                    fg="green",
+                )
+            )
+        except Exception as exc:
+            db.session.rollback()
+            click.echo(click.style(f"\n✗ Seed failed: {exc}", fg="red"))
+            raise
+
     @app.cli.command("db-migrate")
     @click.option("-m", "--message", default=None, help="Migration message")
     @with_appcontext
