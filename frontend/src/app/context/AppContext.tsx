@@ -121,13 +121,45 @@ const mapApiOrder = (o: any): Order => ({
   id: o.id,
   buyer: {
     id: o.buyer?.id || "",
-    first_name: o.buyer?.first_name || "",
-    last_name: o.buyer?.last_name || "",
+    first_name: o.buyer?.full_name?.split(" ")[0] || o.buyer?.first_name || "",
+    last_name:
+      o.buyer?.full_name?.split(" ").slice(1).join(" ") ||
+      o.buyer?.last_name ||
+      "",
     phone: o.buyer?.phone_number || "",
   },
   items: (o.items || []).map((item: any) => ({
     id: item.id,
-    animal: item.animal ? mapApiAnimal(item.animal) : ({} as Animal),
+    // Build a minimal Animal from snapshot fields — the API does not embed
+    // the full animal object in order items; it provides snapshot fields instead.
+    animal: {
+      id: item.animal_id || "",
+      name: item.animal_name_snapshot || "",
+      description: "",
+      animal_type: {
+        id: "",
+        name: item.animal_type_snapshot || "",
+      },
+      breed: { id: "", name: "", animal_type_id: "" },
+      age_months: 0,
+      weight_kg: 0,
+      price: parseFloat(item.price_at_purchase) || 0,
+      location: "",
+      is_available: false,
+      images: item.primary_image
+        ? [{ id: "", url: item.primary_image, is_primary: true, public_id: "" }]
+        : [],
+      farmer: {
+        id: "",
+        first_name: "",
+        last_name: "",
+        phone: "",
+        farm_name: "",
+        county: "",
+      },
+      created_at: "",
+      updated_at: "",
+    } as Animal,
     price_at_purchase: parseFloat(item.price_at_purchase) || 0,
   })),
   total_amount: parseFloat(o.total_amount) || 0,
@@ -187,6 +219,10 @@ const AppContext = createContext<AppContextType | null>(null);
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [animals, setAnimals] = useState<Animal[]>([]);
+  // Farmer-specific listings across all statuses (available + reserved + sold).
+  // The public `animals` array only holds available listings, so we maintain a
+  // separate array for the farmer's own dashboard/listings pages.
+  const [farmerAnimals, setFarmerAnimals] = useState<Animal[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
 
@@ -199,7 +235,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Fetch cart and orders whenever the user changes
+  // Fetch role-specific data whenever the logged-in user changes
   useEffect(() => {
     if (currentUser) {
       if (currentUser.role === "buyer") {
@@ -207,10 +243,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         fetchBuyerOrders();
       } else if (currentUser.role === "farmer") {
         fetchFarmerOrders();
+        fetchFarmerAnimals(currentUser.id);
       }
     } else {
       setCart([]);
       setOrders([]);
+      setFarmerAnimals([]);
     }
   }, [currentUser?.id]);
 
@@ -286,6 +324,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Fetch ALL of a farmer's listings regardless of status (available / reserved / sold).
+  // The public /animals endpoint defaults to status=available, so we run three
+  // parallel requests — one per status — and merge the results.
+  const fetchFarmerAnimals = async (farmerId: string) => {
+    try {
+      const statuses = ["available", "reserved", "sold"];
+      const results = await Promise.all(
+        statuses.map((s) =>
+          fetch(
+            `${API_BASE_URL}/animals?farmer_id=${farmerId}&status=${s}&per_page=100`,
+          )
+            .then((r) => r.json())
+            .catch(() => ({ data: [] })),
+        ),
+      );
+      const all = results.flatMap((r) => (r.data || []).map(mapApiAnimal));
+      all.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+      setFarmerAnimals(all);
+    } catch {
+      // silently fail
+    }
+  };
+
   // ── Auth ──────────────────────────────────────────────────────────────────
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -339,9 +403,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       headers: { Authorization: `Bearer ${getToken()}` },
       body: formData,
     });
-    if (!res.ok) throw new Error("Failed to create listing");
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || "Failed to create listing");
+    }
     const { data } = await res.json();
-    setAnimals((prev) => [mapApiAnimal(data), ...prev]);
+    const mapped = mapApiAnimal(data);
+    setAnimals((prev) => [mapped, ...prev]);
+    setFarmerAnimals((prev) => [mapped, ...prev]);
   };
 
   const updateAnimal = async (
@@ -353,11 +422,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error("Failed to update listing");
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || "Failed to update listing");
+    }
     const { data: updated } = await res.json();
-    setAnimals((prev) =>
-      prev.map((a) => (a.id === id ? mapApiAnimal(updated) : a)),
-    );
+    const mapped = mapApiAnimal(updated);
+    setAnimals((prev) => prev.map((a) => (a.id === id ? mapped : a)));
+    setFarmerAnimals((prev) => prev.map((a) => (a.id === id ? mapped : a)));
   };
 
   const deleteAnimal = async (id: string): Promise<void> => {
@@ -365,16 +437,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       method: "DELETE",
       headers: getAuthHeaders(),
     });
-    if (!res.ok) throw new Error("Failed to delete listing");
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || "Failed to delete listing");
+    }
     setAnimals((prev) => prev.filter((a) => a.id !== id));
+    setFarmerAnimals((prev) => prev.filter((a) => a.id !== id));
   };
 
   const getAnimalById = (id: string) => animals.find((a) => a.id === id);
 
-  const getFarmerAnimals = useCallback(
-    () => animals.filter((a) => a.farmer.id === currentUser?.id),
-    [animals, currentUser?.id],
-  );
+  // Returns the farmer's own listings (all statuses). For farmer dashboard/listings pages.
+  const getFarmerAnimals = useCallback(() => farmerAnimals, [farmerAnimals]);
 
   // ── Cart ──────────────────────────────────────────────────────────────────
 
@@ -453,13 +527,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const getOrdersByFarmer = useCallback(
-    () =>
-      orders.filter((o) =>
-        o.items.some((item) => item.animal?.farmer?.id === currentUser?.id),
-      ),
-    [orders, currentUser?.id],
-  );
+  // The backend /farmer/orders endpoint already filters to this farmer's orders,
+  // so every entry in `orders` (when role=farmer) belongs to them.
+  const getOrdersByFarmer = useCallback(() => orders, [orders]);
 
   const getOrdersByBuyer = useCallback(
     () => orders.filter((o) => o.buyer.id === currentUser?.id),
