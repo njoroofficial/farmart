@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, MapPin, ChevronRight,
+  ArrowLeft, ChevronRight,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatPrice } from '../data/mockData';

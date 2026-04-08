@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, Link, Navigate } from 'react-router';
 import { ArrowLeft, ShieldCheck, Smartphone, Building2, Truck, ChevronDown } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatPrice, getPrimaryImage, KENYAN_COUNTIES } from '../data/mockData';
@@ -21,7 +21,7 @@ export function CheckoutPage() {
 
   // ✅ SECURITY: Redirect unauthenticated users to login
   if (!currentUser) {
-    return navigate('/login', { replace: true });
+    return <Navigate to="/login" replace />;
   }
 
   // State management
@@ -78,26 +78,7 @@ export function CheckoutPage() {
 
     try {
       // Call placeOrder from AppContext with order details
-      const orderId = placeOrder({
-        buyer: {
-          id: currentUser.id,
-          first_name: currentUser.first_name,
-          last_name: currentUser.last_name,
-          phone: currentUser.phone,
-        },
-        items: cart.map(item => ({
-          id: `oi_${item.id}`,
-          animal: item.animal,
-          price_at_purchase: item.animal.price,
-        })),
-        total_amount: cartTotal,
-        status: 'pending',
-        delivery_address: form.address,
-        delivery_county: form.county,
-        buyer_phone: phoneToValidate,
-        payment_method: paymentMethod,
-        notes: form.notes || undefined,
-      });
+      const orderId = await placeOrder(form.address, form.notes || undefined);
 
       // Clear cart and navigate to payment success page
       clearCart();
