@@ -4,6 +4,8 @@ import { Footer } from "./components/Footer";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { MarketplacePage } from "./pages/MarketplacePage";
+import { AnimalDetailPage } from "./pages/AnimalDetailsPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
 import { FarmerLayout } from "./pages/farmer/FarmerLayout";
 import { DashboardPage } from "./pages/farmer/DashboardPage";
@@ -38,7 +40,9 @@ export const router = createBrowserRouter([
     Component: PublicLayout,
     children: [
       { index: true, Component: LandingPage },
-      { path: "checkout", Component: CheckoutPage }
+      { path: 'marketplace', Component: MarketplacePage },
+      { path: "checkout", Component: CheckoutPage },
+      { path: "animals/:id", Component: AnimalDetailPage }
 
     ],
   },
