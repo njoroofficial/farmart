@@ -16,3 +16,24 @@ class TestListAnimals:
         assert response.status_code == 200
         data = response.get_json()
         assert data["data"]["animals"] == []
+        
+    def test_list_animals_success(self, client, session, app):
+        """Listing should return available animals with pagination."""
+        with app.app_context():
+            # Create animal type and breed
+            animal_type = AnimalType(name="Cattle", description="Farm cattle")
+            session.add(animal_type)
+            session.flush()
+            
+            breed = Breed(
+                animal_type_id=animal_type.id,
+                name="Friesian",
+            )
+            session.add(breed)
+            session.flush()
+            
+            
+        
+
+            
+
