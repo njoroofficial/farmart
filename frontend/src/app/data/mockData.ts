@@ -626,3 +626,38 @@ export const SAMPLE_IMAGES: Record<string, string> = {
   Rabbit: RABBIT_IMG,
   Turkey: TURKEY_IMG,
 };
+// ─── UI Adapter (IMPORTANT FIX) ──────────────────────────────────────────────
+
+export interface UIAnimal extends Animal {
+  // mapped fields for frontend compatibility
+  type: AnimalType;
+  breed_name: string;
+  farmName: string;
+  farmerName: string;
+  quantity: number;
+  status: "available" | "sold";
+  verified: boolean;
+  age: number; // in months (alias)
+  weight: number; // alias for weight_kg
+}
+
+// convert API Animal → UI Animal
+export const mapAnimalToUI = (animal: Animal): UIAnimal => {
+  return {
+    ...animal,
+
+    // ✅ mappings
+    type: animal.animal_type.name as AnimalType,
+    breed_name: animal.breed.name,
+    farmName: animal.farmer.farm_name,
+    farmerName: `${animal.farmer.first_name} ${animal.farmer.last_name}`,
+    quantity: 1, // mock (since API doesn't provide stock count)
+    status: animal.is_available ? "available" : "sold",
+    verified: true, // mock (can later come from API)
+    age: animal.age_months,
+    weight: animal.weight_kg,
+  };
+};
+
+// convert all animals
+export const mockUIAnimals: UIAnimal[] = mockAnimals.map(mapAnimalToUI);
