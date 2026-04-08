@@ -38,7 +38,8 @@ export const router = createBrowserRouter([
     Component: PublicLayout,
     children: [
       { index: true, Component: LandingPage },
-      { path: "/checkout", Component: CheckoutPage },
+      { path: "checkout", Component: CheckoutPage }
+
     ],
   },
 
