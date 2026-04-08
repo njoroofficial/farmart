@@ -32,6 +32,28 @@ class TestListAnimals:
             session.add(breed)
             session.flush()
             
+            # Create a farmer and their animal
+            from app.models.user import User, UserRole, FarmerProfile
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+            
+            
             
         
 
