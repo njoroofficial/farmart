@@ -261,6 +261,80 @@ class TestListAnimals:
         data = response.get_json()
         # Should return 100k, 150k animals
         assert len(data["data"]["animals"]) == 2
+        
+    def test_list_animals_hides_reserved_sold(self, client, session, app):
+        """Reserved and sold animals should not appear in public listing."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.flush()
+
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            
+            session.flush()
+
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            # Create animals with different statuses
+            available = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Available",
+                description="Available animal",
+                age_months=12,
+                price=100000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            reserved = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Reserved",
+                description="Reserved animal",
+                age_months=12,
+                price=100000.00,
+                status=AnimalStatus.RESERVED,
+            )
+            sold = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Sold",
+                description="Sold animal",
+                age_months=12,
+                price=100000.00,
+                status=AnimalStatus.SOLD,
+            )
+            session.add_all([available, reserved, sold])
+            session.commit()
+        
+         # List should only show available
+        response = client.get("/api/v1/animals")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["data"]["animals"]) == 1
+        assert data["data"]["animals"][0]["name"] == "Available"
 
             
 
