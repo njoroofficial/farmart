@@ -164,5 +164,207 @@ class TestGetCart:
         data = response.get_json()
         assert data["data"]["has_unavailable_items"] is True
         assert data["data"]["checkout_ready"] is False
+        
+class TestAddToCart:
+    """Tests for POST /api/v1/cart/items"""
+
+    def test_add_to_cart_success(self, client, buyer_auth_headers, session, app):
+        """Adding available animal to cart should return 201."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
             
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.flush()
+
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            animal = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Cow",
+                description="Test",
+                age_months=12,
+                price=100000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            session.add(animal)
+            session.commit()
+            animal_id = animal.id
+
+        response = client.post(
+            "/api/v1/cart/items",
+            headers=buyer_auth_headers,
+            json={"animal_id": animal_id},
+        )
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["data"]["animal_id"] == animal_id
+
+    def test_add_to_cart_missing_animal_id(self, client, buyer_auth_headers):
+        """Adding without animal_id should return 400."""
+        response = client.post(
+            "/api/v1/cart/items",
+            headers=buyer_auth_headers,
+            json={},
+        )
+        assert response.status_code == 400
+        
+    def test_add_to_cart_animal_not_found(self, client, buyer_auth_headers):
+        """Adding non-existent animal should return 404."""
+        response = client.post(
+            "/api/v1/cart/items",
+            headers=buyer_auth_headers,
+            json={"animal_id": "nonexistent-id"},
+        )
+        assert response.status_code == 404
+
+    def test_add_to_cart_animal_reserved(self, client, buyer_auth_headers, session, app):
+        """Adding a reserved animal should return 400."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.flush()
+
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+            
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            animal = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Cow",
+                description="Test",
+                age_months=12,
+                price=100000.00,
+                status=AnimalStatus.RESERVED,  # Already reserved
+            )
+            session.add(animal)
+            session.commit()
+            animal_id = animal.id
+
+        response = client.post(
+            "/api/v1/cart/items",
+            headers=buyer_auth_headers,
+            json={"animal_id": animal_id},
+        )
+        assert response.status_code == 400
+
+    def test_add_to_cart_duplicate_animal(self, client, buyer_auth_headers, session, app):
+        """Adding same animal twice should return 409 Conflict."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.flush()
+
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            animal = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Cow",
+                description="Test",
+                age_months=12,
+                price=100000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            session.add(animal)
+            session.commit()
+            animal_id = animal.id
+
+        # Add first time
+        response1 = client.post(
+            "/api/v1/cart/items",
+            headers=buyer_auth_headers,
+            json={"animal_id": animal_id},
+        )
+        assert response1.status_code == 201
+
+        # Add second time - should fail
+        response2 = client.post(
+            "/api/v1/cart/items",
+            headers=buyer_auth_headers,
+            json={"animal_id": animal_id},
+        )
+        assert response2.status_code == 409
+
+    def test_add_to_cart_unauthenticated(self, client):
+        """Unauthenticated request should return 401."""
+        response = client.post(
+            "/api/v1/cart/items",
+            json={"animal_id": "some-id"},
+        )
+        assert response.status_code == 401
+
+
+            
+
 
