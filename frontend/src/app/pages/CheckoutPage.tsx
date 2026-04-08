@@ -110,6 +110,84 @@ export function CheckoutPage() {
       setLoading(false);
     }
   };
-  
+
+  return (
+    <div className="bg-[#F7F4EF] min-h-screen py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Page header with back button */}
+        <div className="flex items-center gap-3 mb-6">
+          <Link to="/cart" className="p-2 rounded-lg hover:bg-white transition-colors">
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <h1 className="text-[#1B2D1B]" style={{ fontWeight: 700, fontSize: '1.5rem' }}>Checkout</h1>
+        </div>
+
+        {/* Buyer info banner - displays current user */}
+        <div className="bg-[#F0F7F4] border border-green-200 rounded-xl px-4 py-3 mb-6 text-sm text-gray-600">
+          Ordering as <span className="text-[#2D6A4F]" style={{ fontWeight: 600 }}>{currentUser.first_name} {currentUser.last_name}</span> · {currentUser.email}
+        </div>
+
+        {/* Error message display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-6 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handlePlaceOrder}>
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left column: Delivery and payment forms */}
+            <div className="lg:col-span-2 space-y-5">
+              {/* Delivery Details Section */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h2 className="text-[#1B2D1B] mb-4" style={{ fontWeight: 700 }}>Delivery Details</h2>
+                <div className="space-y-4">
+                  {/* Delivery address input */}
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1" style={{ fontWeight: 500 }}>
+                      Delivery Address *
+                    </label>
+                    <input
+                    required type="text" value={form.address}
+                      onChange={e => update('address', e.target.value)}
+                      placeholder="e.g. 123 Westlands Road, Nairobi"
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#2D6A4F] bg-gray-50"
+                    />
+                  </div>
+
+                  {/* County/Region dropdown */}
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1" style={{ fontWeight: 500 }}>
+                      Delivery County *
+                    </label>
+                    <div className="relative">
+                      <select
+                        required value={form.county} onChange={e => update('county', e.target.value)}
+                        className="w-full appearance-none px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#2D6A4F] bg-gray-50 pr-8"
+                      >
+                        <option value="">Select your county</option>
+                        {KENYAN_COUNTIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* General phone number for contact/COD */}
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1" style={{ fontWeight: 500 }}>
+                      Your Phone Number *
+                    </label>
+                    <input
+                      required type="tel" value={form.phone}
+                      onChange={e => update('phone', e.target.value)}
+                      placeholder="07XXXXXXXX"
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#2D6A4F] bg-gray-50"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Kenyan format: 07XXXXXXXX, 01XXXXXXXX, or +254712345678</p>
+                  </div>
+
+
+
+
 
 
