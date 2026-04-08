@@ -1,56 +1,66 @@
-import { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
-import { AnimalCard } from '../components/AnimalCard';
-import { useApp } from '../context/AppContext';
-import type { AnimalType } from '../data/mockData';
+import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router";
+import { Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { AnimalCard } from "../components/AnimalCard";
+import { useApp } from "../context/AppContext";
+import type { AnimalType } from "../data/mockData";
 
-const TYPES: AnimalType[] = ['Cattle', 'Sheep', 'Goat', 'Poultry', 'Pig', 'Rabbit', 'Turkey'];
+const TYPES: AnimalType[] = [
+  "Cattle",
+  "Sheep",
+  "Goat",
+  "Poultry",
+  "Pig",
+  "Rabbit",
+  "Turkey",
+];
 
 const SORT_OPTIONS = [
-  { label: 'Newest First', value: 'newest' },
-  { label: 'Price: Low to High', value: 'price_asc' },
-  { label: 'Price: High to Low', value: 'price_desc' },
-  { label: 'Top Rated', value: 'rating' },
+  { label: "Newest First", value: "newest" },
+  { label: "Price: Low to High", value: "price_asc" },
+  { label: "Price: High to Low", value: "price_desc" },
+  { label: "Top Rated", value: "rating" },
 ];
 
 const TYPE_EMOJIS: Record<AnimalType, string> = {
-  Cattle: '🐄',
-  Sheep: '🐑',
-  Goat: '🐐',
-  Poultry: '🐓',
-  Pig: '🐖',
-  Turkey: '🦃',
-  Rabbit: '🐇',
+  Cattle: "🐄",
+  Sheep: "🐑",
+  Goat: "🐐",
+  Poultry: "🐓",
+  Pig: "🐖",
+  Turkey: "🦃",
+  Rabbit: "🐇",
 };
 
 export function MarketplacePage() {
   const { animals } = useApp();
   const [searchParams] = useSearchParams();
 
-  const [search, setSearch] = useState<string>(searchParams.get('search') || '');
+  const [search, setSearch] = useState<string>(
+    searchParams.get("search") || "",
+  );
   const [selectedTypes, setSelectedTypes] = useState<AnimalType[]>(
-    searchParams.get('type') ? [searchParams.get('type') as AnimalType] : []
+    searchParams.get("type") ? [searchParams.get("type") as AnimalType] : [],
   );
 
-  const [minAge, setMinAge] = useState<string>('');
-  const [maxAge, setMaxAge] = useState<string>('');
-  const [minPrice, setMinPrice] = useState<string>('');
-  const [maxPrice, setMaxPrice] = useState<string>('');
-  const [breed, setBreed] = useState<string>('');
-  const [location, setLocation] = useState<string>('');
-  const [sort, setSort] = useState<string>('newest');
+  const [minAge, setMinAge] = useState<string>("");
+  const [maxAge, setMaxAge] = useState<string>("");
+  const [minPrice, setMinPrice] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<string>("");
+  const [breed, setBreed] = useState<string>("");
+  const [location, setLocation] = useState<string>("");
+  const [sort, setSort] = useState<string>("newest");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [verifiedOnly, setVerifiedOnly] = useState<boolean>(false);
 
   const breeds = useMemo(
     () => [...new Set(animals.map((a) => a.breed.name))],
-    [animals]
+    [animals],
   );
 
   const locations = useMemo(
     () => [...new Set(animals.map((a) => a.location))],
-    [animals]
+    [animals],
   );
 
   const filtered = useMemo(() => {
@@ -58,18 +68,21 @@ export function MarketplacePage() {
 
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter((a) =>
-        a.name.toLowerCase().includes(q) ||
-        a.animal_type.name.toLowerCase().includes(q) ||
-        a.breed.name.toLowerCase().includes(q) ||
-        a.location.toLowerCase().includes(q) ||
-        `${a.farmer.first_name} ${a.farmer.last_name}`.toLowerCase().includes(q)
+      result = result.filter(
+        (a) =>
+          a.name.toLowerCase().includes(q) ||
+          a.animal_type.name.toLowerCase().includes(q) ||
+          a.breed.name.toLowerCase().includes(q) ||
+          a.location.toLowerCase().includes(q) ||
+          `${a.farmer.first_name} ${a.farmer.last_name}`
+            .toLowerCase()
+            .includes(q),
       );
     }
 
     if (selectedTypes.length) {
       result = result.filter((a) =>
-        selectedTypes.includes(a.animal_type.name as AnimalType)
+        selectedTypes.includes(a.animal_type.name as AnimalType),
       );
     }
 
@@ -85,34 +98,47 @@ export function MarketplacePage() {
     if (verifiedOnly) result = result.filter((a) => !!a.farmer.id);
 
     switch (sort) {
-      case 'price_asc':
+      case "price_asc":
         return [...result].sort((a, b) => a.price - b.price);
-      case 'price_desc':
+      case "price_desc":
         return [...result].sort((a, b) => b.price - a.price);
-      case 'rating':
+      case "rating":
         return [...result].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
       default:
         return [...result].sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
     }
-  }, [animals, search, selectedTypes, breed, location, minAge, maxAge, minPrice, maxPrice, verifiedOnly, sort]);
+  }, [
+    animals,
+    search,
+    selectedTypes,
+    breed,
+    location,
+    minAge,
+    maxAge,
+    minPrice,
+    maxPrice,
+    verifiedOnly,
+    sort,
+  ]);
 
   const toggleType = (type: AnimalType) => {
     setSelectedTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
     );
   };
 
   const clearFilters = () => {
-    setSearch('');
+    setSearch("");
     setSelectedTypes([]);
-    setBreed('');
-    setLocation('');
-    setMinAge('');
-    setMaxAge('');
-    setMinPrice('');
-    setMaxPrice('');
+    setBreed("");
+    setLocation("");
+    setMinAge("");
+    setMaxAge("");
+    setMinPrice("");
+    setMaxPrice("");
     setVerifiedOnly(false);
   };
 
@@ -149,7 +175,7 @@ export function MarketplacePage() {
                 className="flex-1 px-3 py-3 text-sm text-gray-800 outline-none bg-transparent"
               />
               {search && (
-                <button onClick={() => setSearch('')} className="pr-3">
+                <button onClick={() => setSearch("")} className="pr-3">
                   <X className="w-4 h-4 text-gray-400" />
                 </button>
               )}
@@ -158,12 +184,14 @@ export function MarketplacePage() {
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
                 showFilters
-                  ? 'bg-white text-[#2D6A4F]'
-                  : 'bg-white/15 text-white hover:bg-white/25 border border-white/30'
+                  ? "bg-white text-[#2D6A4F]"
+                  : "bg-white/15 text-white hover:bg-white/25 border border-white/30"
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" /> Filters
-              {hasFilters && <span className="w-2 h-2 rounded-full bg-[#E8845A]" />}
+              {hasFilters && (
+                <span className="w-2 h-2 rounded-full bg-[#E8845A]" />
+              )}
             </button>
           </div>
 
@@ -175,8 +203,8 @@ export function MarketplacePage() {
                 onClick={() => toggleType(type)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   selectedTypes.includes(type)
-                    ? 'bg-white text-[#2D6A4F]'
-                    : 'bg-white/15 text-white hover:bg-white/25 border border-white/20'
+                    ? "bg-white text-[#2D6A4F]"
+                    : "bg-white/15 text-white hover:bg-white/25 border border-white/20"
                 }`}
               >
                 <span>{TYPE_EMOJIS[type]}</span> {type}
@@ -189,12 +217,17 @@ export function MarketplacePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex gap-6">
           {/* Sidebar Filters */}
-          <aside className={`${showFilters ? 'block' : 'hidden lg:block'} w-64 shrink-0`}>
+          <aside
+            className={`${showFilters ? "block" : "hidden lg:block"} w-64 shrink-0`}
+          >
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-5 sticky top-20">
               <div className="flex items-center justify-between">
                 <h3 className="text-[#1B2D1B] text-sm font-bold">Filters</h3>
                 {hasFilters && (
-                  <button onClick={clearFilters} className="text-xs text-[#2D6A4F] hover:underline">
+                  <button
+                    onClick={clearFilters}
+                    className="text-xs text-[#2D6A4F] hover:underline"
+                  >
                     Clear all
                   </button>
                 )}
@@ -211,7 +244,11 @@ export function MarketplacePage() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#2D6A4F] bg-gray-50"
                 >
                   <option value="">All Breeds</option>
-                  {breeds.map((b) => <option key={b} value={b}>{b}</option>)}
+                  {breeds.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -226,7 +263,11 @@ export function MarketplacePage() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#2D6A4F] bg-gray-50"
                 >
                   <option value="">All Locations</option>
-                  {locations.map((l) => <option key={l} value={l}>{l}</option>)}
+                  {locations.map((l) => (
+                    <option key={l} value={l}>
+                      {l}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -297,9 +338,13 @@ export function MarketplacePage() {
             {/* Sort + count */}
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-gray-600">
-                <span className="font-semibold">{filtered.length}</span> animals found
+                <span className="font-semibold">{filtered.length}</span> animals
+                found
                 {hasFilters && (
-                  <button onClick={clearFilters} className="ml-2 text-[#2D6A4F] hover:underline text-xs">
+                  <button
+                    onClick={clearFilters}
+                    className="ml-2 text-[#2D6A4F] hover:underline text-xs"
+                  >
                     Clear filters
                   </button>
                 )}
@@ -311,7 +356,9 @@ export function MarketplacePage() {
                   className="appearance-none bg-white border border-gray-200 rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:border-[#2D6A4F] cursor-pointer"
                 >
                   {SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
                   ))}
                 </select>
                 <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -321,8 +368,12 @@ export function MarketplacePage() {
             {filtered.length === 0 ? (
               <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
                 <span className="text-5xl mb-4 block">🔍</span>
-                <p className="text-[#1B2D1B] mb-1 font-semibold">No animals found</p>
-                <p className="text-gray-500 text-sm">Try adjusting your search or filters</p>
+                <p className="text-[#1B2D1B] mb-1 font-semibold">
+                  No animals found
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Try adjusting your search or filters
+                </p>
                 <button
                   onClick={clearFilters}
                   className="mt-4 text-sm text-[#2D6A4F] border border-[#2D6A4F] px-4 py-2 rounded-lg hover:bg-[#F0F7F4] transition-colors"
