@@ -197,20 +197,17 @@ export function LandingPage() {
           {/* Stats bar */}
           <div className="mt-12 grid grid-cols-3 gap-4 max-w-lg">
             {[
-              { value: 1200, label: "Animals Listed" },
-              { value: 340, label: "Verified Farmers" },
-              { value: 2500, label: "Happy Buyers" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p
-                  className="text-white"
-                  style={{ fontWeight: 700, fontSize: "1.25rem" }}
-                >
-                  <CountUp start={0} end={stat.value} duration={2} separator="," />+
-                </p>
-                <p className="text-gray-300 text-xs">{stat.label}</p>
-              </div>
-            ))}
+  { value: 1200, label: "Animals Listed" },
+  { value: 340, label: "Verified Farmers" },
+  { value: 2500, label: "Happy Buyers" },
+].map((stat) => (
+  <div key={stat.label} className="text-center">
+    <p className="text-white" style={{ fontWeight: 700, fontSize: "1.25rem" }}>
+      <CountUp start={0} end={stat.value} duration={2} separator="," />+
+    </p>
+    <p className="text-gray-300 text-xs">{stat.label}</p>
+  </div>
+))}
           </div>
         </div>
       </section>
