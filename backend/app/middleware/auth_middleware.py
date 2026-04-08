@@ -39,6 +39,7 @@ FLASK'S g OBJECT:
 
 """
 from functools import wraps
+from typing import Optional
 
 from flask import g
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
@@ -47,7 +48,7 @@ from app.models.user import User, UserRole
 from app.utils.response import error_response
 
 
-def _load_user_from_jwt() -> User | None:
+def _load_user_from_jwt() -> Optional[User]:
     """
     Internal helper: extract the user ID from the JWT and load the User.
 

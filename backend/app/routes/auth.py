@@ -20,6 +20,7 @@ PATTERN USED IN EVERY ROUTE:
 
 """
 import re
+from typing import List
 
 from flask import Blueprint, request
 from flask_jwt_extended import create_access_token
@@ -43,7 +44,7 @@ def _validate_email(email: str) -> bool:
     return bool(re.match(pattern, email.strip()))
 
 
-def _validate_password(password: str) -> list[str]:
+def _validate_password(password: str) -> List[str]:
     """
     Check password strength and return a list of error messages.
     An empty list means the password is valid.
