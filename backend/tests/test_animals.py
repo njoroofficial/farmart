@@ -53,6 +53,30 @@ class TestListAnimals:
             session.add(profile)
             session.flush()
             
+            # Create animal listing
+            animal = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Bessie the Cow",
+                description="Healthy dairy cow",
+                age_months=24,
+                price=150000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            session.add(animal)
+            session.commit()
+        
+        # List animals
+        response = client.get("/api/v1/animals")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["data"]["animals"]) == 1
+        assert data["data"]["animals"][0]["name"] == "Bessie the Cow"
+        assert data["data"]["animals"][0]["status"] == "available"
+
+            
+            
             
             
         
