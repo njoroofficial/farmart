@@ -5,6 +5,7 @@ import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { MarketplacePage } from "./pages/MarketplacePage";
+import { AnimalDetailPage } from "./pages/AnimalDetailsPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
 import { FarmerLayout } from "./pages/farmer/FarmerLayout";
 import { DashboardPage } from "./pages/farmer/DashboardPage";
@@ -40,7 +41,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: LandingPage },
       { path: 'marketplace', Component: MarketplacePage },
-      { path: "checkout", Component: CheckoutPage }
+      { path: "checkout", Component: CheckoutPage },
+      { path: "animals/:id", Component: AnimalDetailPage }
 
     ],
   },
