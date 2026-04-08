@@ -73,4 +73,43 @@ export function CheckoutPage() {
     }
 
     setLoading(true);
-    
+
+    // Simulated API delay
+    await new Promise(r => setTimeout(r, 1200));
+
+    try {
+      // Call placeOrder from AppContext with order details
+      const orderId = placeOrder({
+        buyer: {
+          id: currentUser.id,
+          first_name: currentUser.first_name,
+          last_name: currentUser.last_name,
+          phone: currentUser.phone,
+        },
+        items: cart.map(item => ({
+          id: `oi_${item.id}`,
+          animal: item.animal,
+          price_at_purchase: item.animal.price,
+        })),
+        total_amount: cartTotal,
+        status: 'pending',
+        delivery_address: form.address,
+        delivery_county: form.county,
+        buyer_phone: phoneToValidate,
+        payment_method: paymentMethod,
+        notes: form.notes || undefined,
+      });
+
+      // Clear cart and navigate to payment success page
+      clearCart();
+      navigate(`/payment-success?orderId=${orderId}&paymentMethod=${paymentMethod}&total=${cartTotal}`);
+    } catch (err) {
+      // Display error if order placement fails
+      setError('Failed to place order. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
+
