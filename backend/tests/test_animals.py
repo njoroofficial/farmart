@@ -397,6 +397,100 @@ class TestGetAnimalDetail:
         response = client.get("/api/v1/animals/nonexistent-id")
         assert response.status_code == 404
         
+class TestCreateAnimal:
+    """Tests for POST /api/v1/animals (requires authentication)"""
+
+    def test_create_animal_success(self, client, farmer_auth_headers, session, app):
+        """A farmer should be able to create an animal listing."""
+        with app.app_context():
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.commit()
+
+        response = client.post(
+            "/api/v1/animals",
+            headers=farmer_auth_headers,
+            json={
+                "animal_type_id": animal_type.id,
+                "breed_id": breed.id,
+                "name": "New Cow",
+                "description": "Healthy cow",
+                "age_months": 18,
+                "price": 120000.00,
+            },
+        )
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["data"]["name"] == "New Cow"
+        assert data["data"]["status"] == "available"
+    
+    def test_create_animal_unauthenticated(self, client):
+        """Unauthenticated request should return 401."""
+        response = client.post("/api/v1/animals", json={
+            "name": "Cow",
+            "price": 100000,
+        })
+        assert response.status_code == 401
+    
+    def test_create_animal_buyer_cannot_create(self, client, buyer_auth_headers):
+        """A buyer trying to create an animal should be rejected."""
+        response = client.post(
+            "/api/v1/animals",
+            headers=buyer_auth_headers,
+            json={
+                "animal_type_id": "some-id",
+                "breed_id": "some-id",
+                "name": "Cow",
+                "description": "Test",
+                "age_months": 12,
+                "price": 100000,
+            },
+        )
+        assert response.status_code == 403
+        
+    def test_create_animal_missing_fields(self, client, farmer_auth_headers):
+        """Missing required fields should return 422."""
+        response = client.post(
+            "/api/v1/animals",
+            headers=farmer_auth_headers,
+            json={
+                "name": "Incomplete Listing",
+                # Missing other required fields
+            },
+        )
+        assert response.status_code == 422
+    
+    def test_create_animal_invalid_price(self, client, farmer_auth_headers, session, app):
+        """Negative or zero price should be rejected."""
+        with app.app_context():
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.commit()
+
+        response = client.post(
+            "/api/v1/animals",
+            headers=farmer_auth_headers,
+            json={
+                "animal_type_id": animal_type.id,
+                "breed_id": breed.id,
+                "name": "Bad Price",
+                "description": "Test",
+                "age_months": 12,
+                "price": -50000.00,  # Invalid: negative
+            },
+        )
+        assert response.status_code == 422
+        
+        
+        
 
 
             
