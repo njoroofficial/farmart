@@ -138,6 +138,75 @@ class TestListAnimals:
         data = response.get_json()
         assert len(data["data"]["animals"]) == 10
         assert data["data"]["pagination"]["page"] == 2
+    
+    def test_list_animals_filter_by_type(self, client, session, app):
+        """Filtering by animal type should work."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            # Create two animal types
+            cattle = AnimalType(name="Cattle")
+            goat = AnimalType(name="Goat")
+            session.add_all([cattle, goat])
+            session.flush()
+
+            # Create breeds
+            friesian = Breed(animal_type_id=cattle.id, name="Friesian")
+            boer = Breed(animal_type_id=goat.id, name="Boer")
+            session.add_all([friesian, boer])
+            session.flush()
+
+            # Create farmer
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            # Create one of each type
+            animal1 = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=cattle.id,
+                breed_id=friesian.id,
+                name="Bessie",
+                description="Diary cow",
+                age_months=24,
+                price=150000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            animal2 = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=goat.id,
+                breed_id=boer.id,
+                name="Billy",
+                description="Meat goat",
+                age_months=18,
+                price=50000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            session.add_all([animal1, animal2])
+            session.commit()
+
+        # Filter by cattle type
+        response = client.get(f"/api/v1/animals?animal_type_id={cattle.id}")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["data"]["animals"]) == 1
+        assert data["data"]["animals"][0]["name"] == "Bessie"
+        
         
 
 
