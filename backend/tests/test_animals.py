@@ -207,6 +207,64 @@ class TestListAnimals:
         assert len(data["data"]["animals"]) == 1
         assert data["data"]["animals"][0]["name"] == "Bessie"
         
+    def test_list_animals_filter_price_range(self, client, session, app):
+        """Filtering by price range should work."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.flush()
+
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+            
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            # Create animals at different price points
+            prices = [50000, 100000, 150000, 200000]
+            for i, price in enumerate(prices):
+                animal = Animal(
+                    farmer_id=farmer.id,
+                    animal_type_id=animal_type.id,
+                    breed_id=breed.id,
+                    name=f"Animal {i+1}",
+                    description="Test animal",
+                    age_months=12,
+                    price=float(price),
+                    status=AnimalStatus.AVAILABLE,
+                )
+                session.add(animal)
+            session.commit()
+            
+        # Filter for animals between 100k and 180k
+        response = client.get("/api/v1/animals?price_min=100000&price_max=180000")
+        assert response.status_code == 200
+        data = response.get_json()
+        # Should return 100k, 150k animals
+        assert len(data["data"]["animals"]) == 2
+
+            
+
+        
         
 
 
