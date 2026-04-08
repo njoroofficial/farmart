@@ -160,7 +160,7 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(reference_bp, url_prefix=f"{API_PREFIX}")
     app.register_blueprint(animals_bp,   url_prefix=f"{API_PREFIX}/animals")
     app.register_blueprint(cart_bp,      url_prefix=f"{API_PREFIX}/cart")
-    app.register_blueprint(orders_bp,    url_prefix=f"{API_PREFIX}/orders")
+    app.register_blueprint(orders_bp,    url_prefix=f"{API_PREFIX}")
     app.register_blueprint(payments_bp,  url_prefix=f"{API_PREFIX}/payments")
 
 

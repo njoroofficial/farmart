@@ -6,7 +6,9 @@ import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { MarketplacePage } from "./pages/MarketplacePage";
 import { AnimalDetailPage } from "./pages/AnimalDetailsPage";
+import { CartPage } from "./pages/CartPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
+import { PaymentSuccessPage } from "./pages/PaymentSuccessPage";
 import { FarmerLayout } from "./pages/farmer/FarmerLayout";
 import { DashboardPage } from "./pages/farmer/DashboardPage";
 import { MyListingsPage } from "./pages/farmer/MyListingsPage";
@@ -41,7 +43,9 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: LandingPage },
       { path: 'marketplace', Component: MarketplacePage },
+      { path: "cart", Component: CartPage },
       { path: "checkout", Component: CheckoutPage },
+      { path: "payment-success", Component: PaymentSuccessPage },
       { path: "animals/:id", Component: AnimalDetailPage }
 
     ],

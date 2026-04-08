@@ -3,11 +3,6 @@ import { ShoppingCart, Trash2, ArrowRight, MapPin, Scale, Clock, ShieldCheck } f
 import { useApp } from '../context/AppContext';
 import { formatPrice, formatAge, getPrimaryImage } from '../data/mockData';
 
-// --- BACKEND API INTEGRATION (uncomment when integrating) ---
-// GET /api/v1/cart → { id, items: CartItem[], total, item_count }
-// DELETE /api/v1/cart/items/:item_id
-// -----------------------------------------------------------
-
 export function CartPage() {
   const { cart, removeFromCart, cartTotal, currentUser } = useApp();
   const navigate = useNavigate();
@@ -91,7 +86,7 @@ export function CartPage() {
                           </p>
                         </div>
                         <button
-                          onClick={() => removeFromCart(item.id)}
+                          onClick={() => removeFromCart(item.animal.id)}
                           className="text-gray-300 hover:text-red-500 transition-colors p-1 shrink-0"
                           title="Remove from cart"
                         >

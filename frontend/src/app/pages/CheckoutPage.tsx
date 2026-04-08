@@ -16,7 +16,7 @@ const PAYMENT_METHODS: { id: PaymentMethod; label: string; icon: React.ElementTy
 
 export function CheckoutPage() {
   // Get cart data and user info from AppContext
-  const { cart, cartTotal, currentUser, clearCart, placeOrder } = useApp();
+  const { cart, cartTotal, currentUser, placeOrder } = useApp();
   const navigate = useNavigate();
 
   // ✅ SECURITY: Redirect unauthenticated users to login
@@ -73,15 +73,13 @@ export function CheckoutPage() {
 
     setLoading(true);
 
-    // Simulated API delay
-    await new Promise(r => setTimeout(r, 1200));
-
     try {
       // Call placeOrder from AppContext with order details
-      const orderId = await placeOrder(form.address, form.notes || undefined);
+      // Include county in the delivery address since the backend stores a single address field
+      const fullAddress = form.county ? `${form.address}, ${form.county}` : form.address;
+      const orderId = await placeOrder(fullAddress, form.notes || undefined);
 
-      // Clear cart and navigate to payment success page
-      clearCart();
+      // Navigate to payment success page (placeOrder already clears the cart)
       navigate(`/payment-success?orderId=${orderId}&paymentMethod=${paymentMethod}&total=${cartTotal}`);
     } catch (err) {
       // Display error if order placement fails
