@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { AnimalCard } from "../components/AnimalCard";
 import { mockAnimals } from "../data/mockData";
-import CountUp from "react-countup";
 
 const HERO_IMG =
   "https://images.unsplash.com/photo-1599565092959-17e1b10a0a78?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200";
@@ -194,20 +193,26 @@ export function LandingPage() {
               </Link>
             </div>
           </div>
-          {/* Stats bar */}
-          <div className="mt-12 grid grid-cols-3 gap-4 max-w-lg">
+        </div>
+
+        {/* Stats bar */}
+        <div className="absolute bottom-0 left-0 right-0 bg-white/10 backdrop-blur-sm border-t border-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 grid grid-cols-3 gap-4">
             {[
-  { value: 1200, label: "Animals Listed" },
-  { value: 340, label: "Verified Farmers" },
-  { value: 2500, label: "Happy Buyers" },
-].map((stat) => (
-  <div key={stat.label} className="text-center">
-    <p className="text-white" style={{ fontWeight: 700, fontSize: "1.25rem" }}>
-      <CountUp start={0} end={stat.value} duration={2} separator="," />+
-    </p>
-    <p className="text-gray-300 text-xs">{stat.label}</p>
-  </div>
-))}
+              { value: "1,200+", label: "Animals Listed" },
+              { value: "340+", label: "Verified Farmers" },
+              { value: "2,500+", label: "Happy Buyers" },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p
+                  className="text-white"
+                  style={{ fontWeight: 700, fontSize: "1.25rem" }}
+                >
+                  {stat.value}
+                </p>
+                <p className="text-gray-300 text-xs">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -258,7 +263,37 @@ export function LandingPage() {
         </div>
       </section>
 
-      
+      {/* ── Featured Listings ── */}
+      <section className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2
+                className="text-[#1B2D1B]"
+                style={{ fontWeight: 700, fontSize: "1.75rem" }}
+              >
+                Featured Listings
+              </h2>
+              <p className="text-gray-500 mt-1 text-sm">
+                Top picks from verified farmers
+              </p>
+            </div>
+            <Link
+              to="/marketplace"
+              className="flex items-center gap-1 text-[#2D6A4F] text-sm hover:underline"
+              style={{ fontWeight: 600 }}
+            >
+              See All <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {featured.map((animal) => (
+              <AnimalCard key={animal.id} animal={animal} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── How It Works ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
