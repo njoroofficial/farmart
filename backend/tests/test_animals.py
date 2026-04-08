@@ -1,0 +1,509 @@
+"""
+tests/test_animals.py
+─────────────────────────────────────────────────────────────────────────────
+Test suite for the animals blueprint (listing management).
+─────────────────────────────────────────────────────────────────────────────
+"""
+import pytest
+from app.models.animal import Animal, AnimalType, Breed, AnimalStatus
+
+class TestListAnimals:
+    """Tests for GET /api/v1/animals"""
+
+    def test_list_animals_empty(self, client):
+        """Listing animals when none exist should return empty array."""
+        response = client.get("/api/v1/animals")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["data"]["animals"] == []
+        
+    def test_list_animals_success(self, client, session, app):
+        """Listing should return available animals with pagination."""
+        with app.app_context():
+            # Create animal type and breed
+            animal_type = AnimalType(name="Cattle", description="Farm cattle")
+            session.add(animal_type)
+            session.flush()
+            
+            breed = Breed(
+                animal_type_id=animal_type.id,
+                name="Friesian",
+            )
+            session.add(breed)
+            session.flush()
+            
+            # Create a farmer and their animal
+            from app.models.user import User, UserRole, FarmerProfile
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+            
+            # Create animal listing
+            animal = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Bessie the Cow",
+                description="Healthy dairy cow",
+                age_months=24,
+                price=150000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            session.add(animal)
+            session.commit()
+        
+        # List animals
+        response = client.get("/api/v1/animals")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["data"]["animals"]) == 1
+        assert data["data"]["animals"][0]["name"] == "Bessie the Cow"
+        assert data["data"]["animals"][0]["status"] == "available"
+    
+    def test_list_animals_pagination(self, client, session, app):
+        """Pagination should work correctly."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            # Setup animal type and breed
+            animal_type = AnimalType(name="Goat", description="Farm goats")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Boer")
+            session.add(breed)
+            session.flush()
+
+            # Create farmer
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            # Create multiple animals
+            for i in range(25):
+                animal = Animal(
+                    farmer_id=farmer.id,
+                    animal_type_id=animal_type.id,
+                    breed_id=breed.id,
+                    name=f"Goat {i+1}",
+                    description="Test goat",
+                    age_months=12,
+                    price=50000.00 + (i * 1000),
+                    status=AnimalStatus.AVAILABLE,
+                )
+                session.add(animal)
+            session.commit()
+            
+        # Get first page
+        response = client.get("/api/v1/animals?page=1&per_page=10")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["data"]["animals"]) == 10
+        assert data["data"]["pagination"]["page"] == 1
+        assert data["data"]["pagination"]["total"] == 25
+
+        # Get second page
+        response = client.get("/api/v1/animals?page=2&per_page=10")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["data"]["animals"]) == 10
+        assert data["data"]["pagination"]["page"] == 2
+    
+    def test_list_animals_filter_by_type(self, client, session, app):
+        """Filtering by animal type should work."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            # Create two animal types
+            cattle = AnimalType(name="Cattle")
+            goat = AnimalType(name="Goat")
+            session.add_all([cattle, goat])
+            session.flush()
+
+            # Create breeds
+            friesian = Breed(animal_type_id=cattle.id, name="Friesian")
+            boer = Breed(animal_type_id=goat.id, name="Boer")
+            session.add_all([friesian, boer])
+            session.flush()
+
+            # Create farmer
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            # Create one of each type
+            animal1 = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=cattle.id,
+                breed_id=friesian.id,
+                name="Bessie",
+                description="Diary cow",
+                age_months=24,
+                price=150000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            animal2 = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=goat.id,
+                breed_id=boer.id,
+                name="Billy",
+                description="Meat goat",
+                age_months=18,
+                price=50000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            session.add_all([animal1, animal2])
+            session.commit()
+
+        # Filter by cattle type
+        response = client.get(f"/api/v1/animals?animal_type_id={cattle.id}")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["data"]["animals"]) == 1
+        assert data["data"]["animals"][0]["name"] == "Bessie"
+        
+    def test_list_animals_filter_price_range(self, client, session, app):
+        """Filtering by price range should work."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.flush()
+
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+            
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            # Create animals at different price points
+            prices = [50000, 100000, 150000, 200000]
+            for i, price in enumerate(prices):
+                animal = Animal(
+                    farmer_id=farmer.id,
+                    animal_type_id=animal_type.id,
+                    breed_id=breed.id,
+                    name=f"Animal {i+1}",
+                    description="Test animal",
+                    age_months=12,
+                    price=float(price),
+                    status=AnimalStatus.AVAILABLE,
+                )
+                session.add(animal)
+            session.commit()
+            
+        # Filter for animals between 100k and 180k
+        response = client.get("/api/v1/animals?price_min=100000&price_max=180000")
+        assert response.status_code == 200
+        data = response.get_json()
+        # Should return 100k, 150k animals
+        assert len(data["data"]["animals"]) == 2
+        
+    def test_list_animals_hides_reserved_sold(self, client, session, app):
+        """Reserved and sold animals should not appear in public listing."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.flush()
+
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            
+            session.flush()
+
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            # Create animals with different statuses
+            available = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Available",
+                description="Available animal",
+                age_months=12,
+                price=100000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            reserved = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Reserved",
+                description="Reserved animal",
+                age_months=12,
+                price=100000.00,
+                status=AnimalStatus.RESERVED,
+            )
+            sold = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Sold",
+                description="Sold animal",
+                age_months=12,
+                price=100000.00,
+                status=AnimalStatus.SOLD,
+            )
+            session.add_all([available, reserved, sold])
+            session.commit()
+        
+         # List should only show available
+        response = client.get("/api/v1/animals")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["data"]["animals"]) == 1
+        assert data["data"]["animals"][0]["name"] == "Available"
+
+class TestGetAnimalDetail:
+    """Tests for GET /api/v1/animals/:id"""
+
+    def test_get_animal_success(self, client, session, app):
+        """Getting a valid animal should return full details."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.flush()
+
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+            
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            animal = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Bessie",
+                description="Healthy dairy cow",
+                age_months=24,
+                price=150000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            session.add(animal)
+            session.commit()
+            animal_id = animal.id
+        
+        response = client.get(f"/api/v1/animals/{animal_id}")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["data"]["name"] == "Bessie"
+        assert data["data"]["age_months"] == 24
+        assert float(data["data"]["price"]) == 150000.00
+
+    def test_get_animal_not_found(self, client):
+        """Getting a non-existent animal should return 404."""
+        response = client.get("/api/v1/animals/nonexistent-id")
+        assert response.status_code == 404
+        
+class TestCreateAnimal:
+    """Tests for POST /api/v1/animals (requires authentication)"""
+
+    def test_create_animal_success(self, client, farmer_auth_headers, session, app):
+        """A farmer should be able to create an animal listing."""
+        with app.app_context():
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.commit()
+
+        response = client.post(
+            "/api/v1/animals",
+            headers=farmer_auth_headers,
+            json={
+                "animal_type_id": animal_type.id,
+                "breed_id": breed.id,
+                "name": "New Cow",
+                "description": "Healthy cow",
+                "age_months": 18,
+                "price": 120000.00,
+            },
+        )
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["data"]["name"] == "New Cow"
+        assert data["data"]["status"] == "available"
+    
+    def test_create_animal_unauthenticated(self, client):
+        """Unauthenticated request should return 401."""
+        response = client.post("/api/v1/animals", json={
+            "name": "Cow",
+            "price": 100000,
+        })
+        assert response.status_code == 401
+    
+    def test_create_animal_buyer_cannot_create(self, client, buyer_auth_headers):
+        """A buyer trying to create an animal should be rejected."""
+        response = client.post(
+            "/api/v1/animals",
+            headers=buyer_auth_headers,
+            json={
+                "animal_type_id": "some-id",
+                "breed_id": "some-id",
+                "name": "Cow",
+                "description": "Test",
+                "age_months": 12,
+                "price": 100000,
+            },
+        )
+        assert response.status_code == 403
+        
+    def test_create_animal_missing_fields(self, client, farmer_auth_headers):
+        """Missing required fields should return 422."""
+        response = client.post(
+            "/api/v1/animals",
+            headers=farmer_auth_headers,
+            json={
+                "name": "Incomplete Listing",
+                # Missing other required fields
+            },
+        )
+        assert response.status_code == 422
+    
+    def test_create_animal_invalid_price(self, client, farmer_auth_headers, session, app):
+        """Negative or zero price should be rejected."""
+        with app.app_context():
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.commit()
+
+        response = client.post(
+            "/api/v1/animals",
+            headers=farmer_auth_headers,
+            json={
+                "animal_type_id": animal_type.id,
+                "breed_id": breed.id,
+                "name": "Bad Price",
+                "description": "Test",
+                "age_months": 12,
+                "price": -50000.00,  # Invalid: negative
+            },
+        )
+        assert response.status_code == 422
+        
+        
+        
+
+
+            
+
+        
+        
+
+
+            
+            
+            
+            
+        
+
+            
+

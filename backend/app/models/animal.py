@@ -29,6 +29,7 @@ WHY age_months NOT date_of_birth:
   — more complex SQL with no benefit for this domain.
 
 """
+from typing import Optional
 from sqlalchemy import Enum as SAEnum
 from app.extensions import db
 from app.models.base import BaseModel
@@ -172,7 +173,7 @@ class Animal(BaseModel):
     #  Computed properties
 
     @property
-    def primary_image_url(self) -> str | None:
+    def primary_image_url(self) -> Optional[str]:
         """Return the URL of the primary image, or None if no images exist."""
         primary = next((img for img in self.images if img.is_primary), None)
         if primary:
