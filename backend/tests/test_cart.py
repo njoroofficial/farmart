@@ -444,6 +444,77 @@ class TestRemoveFromCart:
         )
         assert response.status_code == 404
 
+class TestClearCart:
+    """Tests for DELETE /api/v1/cart"""
+
+    def test_clear_cart_success(self, client, buyer_auth_headers, session, app):
+        """Clearing cart should remove all items."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.flush()
+
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            animal = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Cow",
+                description="Test",
+                age_months=12,
+                price=100000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            session.add(animal)
+            session.commit()
+            animal_id = animal.id
+
+        # Add to cart
+        client.post(
+            "/api/v1/cart/items",
+            headers=buyer_auth_headers,
+            json={"animal_id": animal_id},
+        )
+
+        # Clear cart
+        response = client.delete(
+            "/api/v1/cart",
+            headers=buyer_auth_headers,
+        )
+        assert response.status_code == 200
+
+        # Verify cleared
+        response = client.get(
+            "/api/v1/cart",
+            headers=buyer_auth_headers,
+        )
+        data = response.get_json()
+        assert data["data"]["item_count"] == 0
+        
         
 
             
