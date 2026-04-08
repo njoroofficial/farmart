@@ -4,6 +4,8 @@
 // =============================================================================
 
 // ─── Reference Types ──────────────────────────────────────────────────────────
+export type AnimalType = 'Cattle' | 'Sheep' | 'Goat' | 'Poultry' | 'Pig' | 'Rabbit' | 'Turkey';
+
 export interface AnimalTypeRef {
   id: string;
   name: string;
