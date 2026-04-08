@@ -336,6 +336,69 @@ class TestListAnimals:
         assert len(data["data"]["animals"]) == 1
         assert data["data"]["animals"][0]["name"] == "Available"
 
+class TestGetAnimalDetail:
+    """Tests for GET /api/v1/animals/:id"""
+
+    def test_get_animal_success(self, client, session, app):
+        """Getting a valid animal should return full details."""
+        with app.app_context():
+            from app.models.user import User, UserRole, FarmerProfile
+            
+            animal_type = AnimalType(name="Cattle")
+            session.add(animal_type)
+            session.flush()
+
+            breed = Breed(animal_type_id=animal_type.id, name="Friesian")
+            session.add(breed)
+            session.flush()
+
+            farmer = User(
+                email="farmer@test.com",
+                role=UserRole.FARMER,
+                first_name="Test",
+                last_name="Farmer",
+                is_verified=True,
+            )
+            farmer.set_password("Test@1234")
+            session.add(farmer)
+            session.flush()
+            
+            profile = FarmerProfile(
+                user_id=farmer.id,
+                farm_name="Test Farm",
+                farm_location="Kiambu",
+            )
+            session.add(profile)
+            session.flush()
+
+            animal = Animal(
+                farmer_id=farmer.id,
+                animal_type_id=animal_type.id,
+                breed_id=breed.id,
+                name="Bessie",
+                description="Healthy dairy cow",
+                age_months=24,
+                price=150000.00,
+                status=AnimalStatus.AVAILABLE,
+            )
+            session.add(animal)
+            session.commit()
+            animal_id = animal.id
+        
+        response = client.get(f"/api/v1/animals/{animal_id}")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["data"]["name"] == "Bessie"
+        assert data["data"]["age_months"] == 24
+        assert float(data["data"]["price"]) == 150000.00
+
+    def test_get_animal_not_found(self, client):
+        """Getting a non-existent animal should return 404."""
+        response = client.get("/api/v1/animals/nonexistent-id")
+        assert response.status_code == 404
+        
+
+
             
 
         
