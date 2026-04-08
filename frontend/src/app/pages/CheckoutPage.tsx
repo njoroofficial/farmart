@@ -38,3 +38,39 @@ export function CheckoutPage() {
     mpesaPhone: currentUser.phone || '',
     notes: '',
   });
+  // Helper function to update form fields
+  const update = (field: string, val: string) => setForm(prev => ({ ...prev, [field]: val }));
+
+  // Validates Kenyan phone number formats
+  // Accepts: 07XXXXXXXX, 01XXXXXXXX, +254712345678, etc.
+  const isValidPhone = (phone: string) => {
+    return /^(07|01|\+2547|\+2541)\d{6,}$/.test(phone);
+  };
+
+  // Show empty cart message if no items
+  if (cart.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#F7F4EF] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-5xl mb-4">🛒</p>
+          <h2 className="text-[#1B2D1B] mb-2" style={{ fontWeight: 700 }}>Your cart is empty</h2>
+          <Link to="/marketplace" className="text-[#2D6A4F] hover:underline text-sm">Browse Animals</Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle order submission
+  const handlePlaceOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    // Validate the phone number based on selected payment method
+    const phoneToValidate = paymentMethod === 'mpesa' ? form.mpesaPhone : form.phone;
+    if (!isValidPhone(phoneToValidate)) {
+      setError('Please enter a valid Kenyan phone number');
+      return;
+    }
+
+    setLoading(true);
+    
