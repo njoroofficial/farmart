@@ -1,0 +1,59 @@
+# This will run on every push to any branch
+
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - "backend/**"
+  pull_request:
+    paths:
+      - "backend/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: farmart
+          POSTGRES_PASSWORD: farmart_test
+          POSTGRES_DB: farmart_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Run linter
+        working-directory: backend
+        run: |
+          pip install flake8
+          flake8 app/ --max-line-length=100 --exclude=migrations/
+
+      - name: Run tests with coverage
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://farmart:farmart_test@localhost:5432/farmart_test
+          JWT_SECRET_KEY: test-secret-key
+          FLASK_ENV: testing
+        run: |
+          pip install pytest-cov
+          pytest tests/ --cov=app --cov-report=term-missing --cov-fail-under=85
