@@ -85,7 +85,7 @@ def create_app(config_name: str = None) -> Flask:
     #
     # If you add a new model file, add its import here.
     with app.app_context():
-        from app.models import user, animal, cart, payment  # noqa: F401
+        from app.models import user, animal, cart, order, payment  # noqa: F401
 
     # 6. Configure Cloudinary
     # Cloudinary uses a global configuration pattern rather than Flask's
