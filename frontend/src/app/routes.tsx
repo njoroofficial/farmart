@@ -10,6 +10,7 @@ import { CartPage } from "./pages/CartPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
 import { PaymentSuccessPage } from "./pages/PaymentSuccessPage";
 import { MyOrdersPage } from "./pages/MyOrdersPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { FarmerLayout } from "./pages/farmer/FarmerLayout";
 import { DashboardPage } from "./pages/farmer/DashboardPage";
 import { MyListingsPage } from "./pages/farmer/MyListingsPage";
@@ -59,6 +60,7 @@ export const router = createBrowserRouter([
     children: [
       { path: "login", Component: LoginPage },
       { path: "register", Component: RegisterPage },
+      { path: "verify-email", Component: VerifyEmailPage },
     ],
   },
   {
