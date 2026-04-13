@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   List,
   PlusCircle,
+  Package,
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 
@@ -37,6 +38,7 @@ export function Navbar() {
     : [
         { label: "Browse Animals", to: "/marketplace" },
         { label: "Categories", to: "/marketplace?tab=categories" },
+        ...(currentUser ? [{ label: "My Orders", to: "/my-orders" }] : []),
       ];
 
   return (
@@ -154,13 +156,22 @@ export function Navbar() {
                         </>
                       )}
                       {!isFarmer && (
-                        <Link
-                          to="/marketplace"
-                          onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#2D6A4F]"
-                        >
-                          <List className="w-4 h-4" /> Marketplace
-                        </Link>
+                        <>
+                          <Link
+                            to="/marketplace"
+                            onClick={() => setDropdownOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#2D6A4F]"
+                          >
+                            <List className="w-4 h-4" /> Marketplace
+                          </Link>
+                          <Link
+                            to="/my-orders"
+                            onClick={() => setDropdownOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#2D6A4F]"
+                          >
+                            <Package className="w-4 h-4" /> My Orders
+                          </Link>
+                        </>
                       )}
                       <button
                         onClick={handleLogout}
@@ -222,14 +233,23 @@ export function Navbar() {
           ) : (
             <div className="pt-2 border-t border-gray-100 space-y-2">
               {!isFarmer && (
-                <Link
-                  to="/cart"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 text-sm text-gray-700 py-1"
-                >
-                  <ShoppingCart className="w-4 h-4" /> Cart{" "}
-                  {cartCount > 0 && `(${cartCount})`}
-                </Link>
+                <>
+                  <Link
+                    to="/cart"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 text-sm text-gray-700 py-1"
+                  >
+                    <ShoppingCart className="w-4 h-4" /> Cart{" "}
+                    {cartCount > 0 && `(${cartCount})`}
+                  </Link>
+                  <Link
+                    to="/my-orders"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 text-sm text-gray-700 py-1"
+                  >
+                    <Package className="w-4 h-4" /> My Orders
+                  </Link>
+                </>
               )}
               <button
                 onClick={handleLogout}

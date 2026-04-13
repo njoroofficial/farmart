@@ -92,17 +92,10 @@ export function RegisterPage() {
         farm_name: role === "farmer" ? form.farm_name : undefined,
         farm_location: form.farm_location || undefined,
       };
-      const success = await register(data);
-
-      if (success) {
-        setEmailSent(true);
-      } else {
-        setError(
-          "Registration failed. An account with this email may already exist.",
-        );
-      }
-    } catch {
-      setError("Something went wrong. Please try again.");
+      await register(data);
+      setEmailSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

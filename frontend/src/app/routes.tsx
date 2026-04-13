@@ -9,6 +9,7 @@ import { AnimalDetailPage } from "./pages/AnimalDetailsPage";
 import { CartPage } from "./pages/CartPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
 import { PaymentSuccessPage } from "./pages/PaymentSuccessPage";
+import { MyOrdersPage } from "./pages/MyOrdersPage";
 import { FarmerLayout } from "./pages/farmer/FarmerLayout";
 import { DashboardPage } from "./pages/farmer/DashboardPage";
 import { MyListingsPage } from "./pages/farmer/MyListingsPage";
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
       { path: "cart", Component: CartPage },
       { path: "checkout", Component: CheckoutPage },
       { path: "payment-success", Component: PaymentSuccessPage },
+      { path: "my-orders", Component: MyOrdersPage },
       { path: "animals/:id", Component: AnimalDetailPage }
 
     ],

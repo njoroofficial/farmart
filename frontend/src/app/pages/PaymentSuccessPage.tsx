@@ -1,5 +1,5 @@
 import { useSearchParams, Link } from 'react-router';
-import { CheckCircle, Package, ArrowRight, Home, Phone, MapPin, CreditCard } from 'lucide-react';
+import { CheckCircle, Package, ArrowRight, Home, Phone, MapPin, CreditCard } from "lucide-react";
 import { useApp } from '../context/AppContext';
 import { formatPrice, getPrimaryImage } from '../data/mockData';
 
@@ -135,9 +135,13 @@ export function PaymentSuccessPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <Link to="/marketplace"
+          <Link to="/my-orders"
             className="flex items-center justify-center gap-2 bg-[#2D6A4F] text-white py-3 rounded-xl text-sm hover:bg-[#235A41] transition-colors"
             style={{ fontWeight: 600 }}>
+            <Package className="w-4 h-4" /> View My Orders
+          </Link>
+          <Link to="/marketplace"
+            className="flex items-center justify-center gap-2 border border-gray-200 text-gray-600 py-3 rounded-xl text-sm hover:bg-white transition-colors">
             Continue Shopping <ArrowRight className="w-4 h-4" />
           </Link>
           <Link to="/"
