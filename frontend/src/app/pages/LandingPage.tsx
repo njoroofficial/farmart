@@ -11,50 +11,34 @@ import {
   Truck,
   CheckCircle,
   ChevronRight,
+  Flame,
 } from "lucide-react";
 import { AnimalCard } from "../components/AnimalCard";
-import { mockAnimals } from "../data/mockData";
+import {
+  mockAnimals,
+  mockAnimalTypes,
+  SAMPLE_IMAGES,
+  formatPrice,
+} from "../data/mockData";
 
 const HERO_IMG =
   "https://images.unsplash.com/photo-1599565092959-17e1b10a0a78?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200";
 
-const CATEGORIES = [
-  {
-    type: "Cattle",
-    emoji: "🐄",
-    color: "bg-amber-50  border-amber-200 text-amber-800",
-  },
-  {
-    type: "Sheep",
-    emoji: "🐑",
-    color: "bg-blue-50   border-blue-200  text-blue-800",
-  },
-  {
-    type: "Goat",
-    emoji: "🐐",
-    color: "bg-purple-50 border-purple-200 text-purple-800",
-  },
-  {
-    type: "Poultry",
-    emoji: "🐓",
-    color: "bg-orange-50 border-orange-200 text-orange-800",
-  },
-  {
-    type: "Pig",
-    emoji: "🐖",
-    color: "bg-pink-50   border-pink-200  text-pink-800",
-  },
-  {
-    type: "Turkey",
-    emoji: "🦃",
-    color: "bg-red-50    border-red-200   text-red-800",
-  },
-  {
-    type: "Rabbit",
-    emoji: "🐇",
-    color: "bg-teal-50   border-teal-200  text-teal-800",
-  },
-];
+// Derived from real animal data — no hardcoded counts or prices
+const CATEGORIES = mockAnimalTypes.map((type) => {
+  const available = mockAnimals.filter(
+    (a) => a.animal_type.name === type.name && a.is_available,
+  );
+  const minPrice = available.length
+    ? Math.min(...available.map((a) => a.price))
+    : null;
+  return {
+    type: type.name,
+    image: SAMPLE_IMAGES[type.name],
+    count: available.length,
+    fromPrice: minPrice,
+  };
+});
 
 const TESTIMONIALS = [
   {
@@ -107,7 +91,15 @@ const HOW_IT_WORKS = [
 export function LandingPage() {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
-  const featured = mockAnimals.slice(0, 4);
+
+  // Top 4 by popularity (rating × review count), available only
+  const featured = [...mockAnimals]
+    .filter((a) => a.is_available)
+    .sort(
+      (a, b) =>
+        (b.rating ?? 0) * (b.reviews ?? 0) - (a.rating ?? 0) * (a.reviews ?? 0),
+    )
+    .slice(0, 4);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -244,20 +236,27 @@ export function LandingPage() {
             <Link
               key={cat.type}
               to={`/marketplace?type=${cat.type}`}
-              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 ${cat.color} hover:scale-105 transition-transform`}
+              className="group relative flex flex-col justify-end rounded-2xl overflow-hidden aspect-3/4 hover:scale-[1.03] transition-transform duration-200 shadow-sm"
             >
-              <span style={{ fontSize: "2rem" }}>{cat.emoji}</span>
-              <span className="text-sm text-center" style={{ fontWeight: 600 }}>
-                {cat.type}
-              </span>
-              <span className="text-xs opacity-70">
-                {
-                  mockAnimals.filter(
-                    (a) => a.animal_type.name === cat.type && a.is_available,
-                  ).length
-                }{" "}
-                listed
-              </span>
+              {/* Background image */}
+              <img
+                src={cat.image}
+                alt={cat.type}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
+              {/* Text */}
+              <div className="relative z-10 p-3">
+                <p className="text-white text-sm" style={{ fontWeight: 700 }}>
+                  {cat.type}
+                </p>
+                <p className="text-white/70 text-[10px]">
+                  {cat.count > 0
+                    ? `${cat.count} listed · from ${formatPrice(cat.fromPrice!)}`
+                    : "Coming soon"}
+                </p>
+              </div>
             </Link>
           ))}
         </div>
@@ -287,8 +286,18 @@ export function LandingPage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {featured.map((animal) => (
-              <AnimalCard key={animal.id} animal={animal} />
+            {featured.map((animal, i) => (
+              <div key={animal.id} className="relative">
+                {i === 0 && (
+                  <div
+                    className="absolute -top-2.5 left-3 z-10 flex items-center gap-1 bg-[#E8845A] text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm"
+                    style={{ fontWeight: 700 }}
+                  >
+                    <Flame className="w-3 h-3" /> Top Pick
+                  </div>
+                )}
+                <AnimalCard animal={animal} />
+              </div>
             ))}
           </div>
         </div>
