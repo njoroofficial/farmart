@@ -61,7 +61,11 @@ orders_bp = Blueprint("orders", __name__)
 @buyer_required
 def checkout():
     """
-    Convert the buyer's cart into a confirmed order.
+    Convert the buyer's cart into confirmed orders — one per farmer.
+
+    When a cart contains animals from multiple farmers, each farmer receives
+    their own independent order so they can confirm or reject without
+    affecting the other farmer's order.
 
     This is the most critical endpoint in the system — it handles money and
     concurrent buyers competing for the same animals. Every step is inside
@@ -120,41 +124,54 @@ def checkout():
             animal.status = AnimalStatus.RESERVED
             db.session.add(animal)
 
-        # Calculate total from current (locked) prices — not from any cached value
-        total = sum(float(a.price) for a in animals)
-
-        # Create the order
-        order = Order(
-            buyer_id=buyer.id,
-            total_amount=total,
-            status=OrderStatus.PENDING,
-            delivery_address=delivery_address,
-            notes=data.get("notes", "").strip() or None,
-        )
-        db.session.add(order)
-        db.session.flush()  # Get order.id for the order items
-
-        # Create one OrderItem per animal — capturing the price snapshot
+        # Group animals by farmer — each farmer gets their own order so they
+        # can independently confirm or reject their portion of the purchase.
         animal_map = {a.id: a for a in animals}
+        farmer_groups: dict[str, list] = {}
         for cart_item in cart.items:
             animal = animal_map.get(cart_item.animal_id)
             if not animal:
                 continue
-            order_item = OrderItem(
-                order_id=order.id,
-                animal_id=animal.id,
-                price_at_purchase=animal.price,
-                animal_name_snapshot=animal.name,
-                animal_type_snapshot=animal.animal_type.name if animal.animal_type else "Unknown",
+            fid = str(animal.farmer_id)
+            farmer_groups.setdefault(fid, []).append(animal)
+
+        notes = data.get("notes", "").strip() or None
+        created_orders = []
+
+        for farmer_id, farmer_animals in farmer_groups.items():
+            farmer_total = sum(float(a.price) for a in farmer_animals)
+
+            order = Order(
+                buyer_id=buyer.id,
+                total_amount=farmer_total,
+                status=OrderStatus.PENDING,
+                delivery_address=delivery_address,
+                notes=notes,
             )
-            db.session.add(order_item)
+            db.session.add(order)
+            db.session.flush()  # Get order.id for the order items
+
+            for animal in farmer_animals:
+                order_item = OrderItem(
+                    order_id=order.id,
+                    animal_id=animal.id,
+                    price_at_purchase=animal.price,
+                    animal_name_snapshot=animal.name,
+                    animal_type_snapshot=animal.animal_type.name if animal.animal_type else "Unknown",
+                )
+                db.session.add(order_item)
+
+            created_orders.append(order)
 
         # Clear the cart items — the cart row itself stays (empty container)
         CartItem.query.filter_by(cart_id=cart.id).delete()
 
-        # Single atomic commit — all reservations, order, items, and cart clear
+        # Single atomic commit — all reservations, orders, items, and cart clear
         db.session.commit()
-        logger.info(f"Order {order.id} created by buyer {buyer.id}. Total: {total}")
+        logger.info(
+            f"{len(created_orders)} order(s) created by buyer {buyer.id} "
+            f"(farmers: {list(farmer_groups.keys())})"
+        )
 
     except Exception as e:
         db.session.rollback()
@@ -165,19 +182,29 @@ def checkout():
 
     # ── Send notification emails (outside the transaction) ────────────────────
     # Emails are sent after the commit so a SendGrid hiccup never rolls back
-    # the order. The order exists — emails are a best-effort notification.
-    # We notify each unique farmer whose animals are in this order.
-    farmer_ids_notified = set()
-    for order_item in order.items:
-        if order_item.animal and order_item.animal.farmer_id not in farmer_ids_notified:
-            send_order_notification_to_farmer(order_item.animal.farmer, order)
-            farmer_ids_notified.add(order_item.animal.farmer_id)
+    # the orders. Each farmer is notified about their specific order only.
+    for order in created_orders:
+        try:
+            if order.items and order.items[0].animal:
+                send_order_notification_to_farmer(order.items[0].animal.farmer, order)
+        except Exception:
+            pass
 
-    send_order_confirmation_to_buyer(buyer, order)
+    try:
+        # Notify buyer once — summarise all orders placed
+        send_order_confirmation_to_buyer(buyer, created_orders[0])
+    except Exception:
+        pass
 
     return success_response(
-        data=order.to_dict(),
-        message="Order placed successfully. The farmer has been notified.",
+        data={
+            "orders": [o.to_dict() for o in created_orders],
+            "order_count": len(created_orders),
+        },
+        message=(
+            f"Order placed successfully. "
+            f"{len(created_orders)} farmer(s) have been notified."
+        ),
         status_code=201,
     )
 

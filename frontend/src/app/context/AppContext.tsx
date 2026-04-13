@@ -179,7 +179,7 @@ interface AppContextType {
   // Auth
   currentUser: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (data: RegisterData) => Promise<boolean>;
+  register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
 
   // Animals
@@ -365,7 +365,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
 
-  const register = async (data: RegisterData): Promise<boolean> => {
+  const register = async (data: RegisterData): Promise<void> => {
     const res = await fetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -380,7 +380,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         farm_location: data.farm_location,
       }),
     });
-    return res.ok || res.status === 201;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || "Registration failed. Please try again.");
+    }
   };
 
   const logout = async (): Promise<void> => {
@@ -499,12 +502,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       headers: getAuthHeaders(),
       body: JSON.stringify({ delivery_address: deliveryAddress, notes }),
     });
-    if (!res.ok) throw new Error("Checkout failed");
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || "Checkout failed");
+    }
     const { data } = await res.json();
-    const order = mapApiOrder(data);
-    setOrders((prev) => [order, ...prev]);
+    // API now returns { orders: [...], order_count: N }
+    const createdOrders: Order[] = (data.orders || [data]).map(mapApiOrder);
+    setOrders((prev) => [...createdOrders, ...prev]);
     setCart([]);
-    return order.id;
+    // Return the first order's id for the success page redirect
+    return createdOrders[0]?.id ?? "";
   };
 
   const updateOrderStatus = async (
@@ -531,10 +539,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // so every entry in `orders` (when role=farmer) belongs to them.
   const getOrdersByFarmer = useCallback(() => orders, [orders]);
 
-  const getOrdersByBuyer = useCallback(
-    () => orders.filter((o) => o.buyer.id === currentUser?.id),
-    [orders, currentUser?.id],
-  );
+  // The backend /orders endpoint already filters to this buyer's orders,
+  // so every entry in `orders` (when role=buyer) belongs to them.
+  const getOrdersByBuyer = useCallback(() => orders, [orders]);
 
   // ── Provider render ───────────────────────────────────────────────────────
   return (
