@@ -96,7 +96,7 @@ def send_verification_email(user, token_string: str) -> bool:
     The link points to your React frontend's /verify-email page, which
     reads the token from the URL and calls POST /api/v1/auth/verify-email.
     """
-    frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:3000")
+    frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
     verify_url = f"{frontend_url}/verify-email?token={token_string}"
 
     html = f"""
@@ -142,7 +142,7 @@ def send_password_reset_email(user, token_string: str) -> bool:
     We use a deliberately vague subject line to avoid confirming to an
     attacker that a given email address is registered on the platform.
     """
-    frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:3000")
+    frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
     reset_url = f"{frontend_url}/reset-password?token={token_string}"
 
     html = f"""

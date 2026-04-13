@@ -138,7 +138,7 @@ class Config:
     #   domain (Flask on Render) by default — this is the Same-Origin Policy.
     #   CORS headers tell the browser "it's okay, I trust this origin."
     #   In production, we restrict this to our actual frontend URL.
-    CORS_ORIGINS = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    CORS_ORIGINS = os.getenv("FRONTEND_URL", "http://localhost:5173")
     CORS_SUPPORTS_CREDENTIALS = True
 
     #  Email (SendGrid)
