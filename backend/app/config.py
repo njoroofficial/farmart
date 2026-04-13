@@ -137,8 +137,13 @@ class Config:
     #   Browsers block requests from one domain (React on Vercel) to a different
     #   domain (Flask on Render) by default — this is the Same-Origin Policy.
     #   CORS headers tell the browser "it's okay, I trust this origin."
-    #   In production, we restrict this to our actual frontend URL.
-    CORS_ORIGINS = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    #   In production, we restrict this to our actual frontend URL(s).
+    #
+    # FRONTEND_URL supports comma-separated values so you can allow both the
+    # production URL and Vercel preview deployment URLs:
+    #   FRONTEND_URL=https://farmart-pearl.vercel.app,https://preview-url.vercel.app
+    _raw_origins = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    CORS_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
     CORS_SUPPORTS_CREDENTIALS = True
 
     #  Email (SendGrid)
