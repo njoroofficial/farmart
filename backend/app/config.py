@@ -142,6 +142,7 @@ class Config:
     # FRONTEND_URL supports comma-separated values so you can allow both the
     # production URL and Vercel preview deployment URLs:
     #   FRONTEND_URL=https://farmart-pearl.vercel.app,https://preview-url.vercel.app
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173").split(",")[0].strip()
     _raw_origins = os.getenv("FRONTEND_URL", "http://localhost:5173")
     CORS_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
     CORS_SUPPORTS_CREDENTIALS = True
@@ -184,6 +185,8 @@ class DevelopmentConfig(Config):
     # Echo SQL queries to the console so you can see exactly what SQLAlchemy
     # generates from your model queries. Invaluable for debugging N+1 problems.
     SQLALCHEMY_ECHO = True
+
+    FRONTEND_URL = "http://localhost:5173"
 
     # Allow both localhost and 127.0.0.1 variants for Vite's dev server.
     CORS_ORIGINS = [
