@@ -133,6 +133,7 @@ function CountUp({ target, duration = 2000 }: { target: string; duration?: numbe
 function CategoryCarousel() {
   const [start, setStart] = useState(0);
   const [visible, setVisible] = useState(2);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     const update = () => {
@@ -146,14 +147,27 @@ function CategoryCarousel() {
   }, []);
 
   const maxStart = Math.max(0, CATEGORIES.length - visible);
+
+  useEffect(() => {
+    if (isPaused || maxStart === 0) return;
+    const interval = setInterval(() => {
+      setStart((s) => (s >= maxStart ? 0 : s + 1));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isPaused, maxStart]);
+
   const showPrev = start > 0;
   const showNext = start < maxStart;
 
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <div className="overflow-hidden">
         <div
-          className="flex gap-3 transition-transform duration-300"
+          className="flex gap-3 transition-transform duration-700 ease-in-out"
           style={{ transform: `translateX(-${start * (100 / visible + 0.5)}%)` }}
         >
           {CATEGORIES.map((cat) => (

@@ -38,7 +38,7 @@ export function Navbar() {
     : [
         { label: "Browse Animals", to: currentUser ? "/marketplace" : "/login" },
         { label: "Categories", to: "/marketplace?tab=categories" },
-        ...(currentUser ? [{ label: "My Orders", to: "/my-orders" }] : []),
+        ...(currentUser ? [{ label: "Dashboard", to: "/buyer/dashboard" }] : []),
       ];
 
   return (
@@ -97,7 +97,7 @@ export function Navbar() {
                 {/* Cart (buyers only) */}
                 {!isFarmer && (
                   <Link
-                    to="/cart"
+                    to="/buyer/cart"
                     className="relative p-2 text-gray-600 hover:text-[#2D6A4F] transition-colors"
                   >
                     <ShoppingCart className="w-5 h-5" />
@@ -158,14 +158,14 @@ export function Navbar() {
                       {!isFarmer && (
                         <>
                           <Link
-                            to="/marketplace"
+                            to="/buyer/dashboard"
                             onClick={() => setDropdownOpen(false)}
                             className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#2D6A4F]"
                           >
-                            <List className="w-4 h-4" /> Marketplace
+                            <LayoutDashboard className="w-4 h-4" /> Dashboard
                           </Link>
                           <Link
-                            to="/my-orders"
+                            to="/buyer/orders"
                             onClick={() => setDropdownOpen(false)}
                             className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#2D6A4F]"
                           >
@@ -235,7 +235,14 @@ export function Navbar() {
               {!isFarmer && (
                 <>
                   <Link
-                    to="/cart"
+                    to="/buyer/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 text-sm text-gray-700 py-1"
+                  >
+                    <LayoutDashboard className="w-4 h-4" /> Dashboard
+                  </Link>
+                  <Link
+                    to="/buyer/cart"
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-2 text-sm text-gray-700 py-1"
                   >
@@ -243,7 +250,7 @@ export function Navbar() {
                     {cartCount > 0 && `(${cartCount})`}
                   </Link>
                   <Link
-                    to="/my-orders"
+                    to="/buyer/orders"
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-2 text-sm text-gray-700 py-1"
                   >

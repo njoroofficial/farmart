@@ -16,7 +16,7 @@ export function LoginPage() {
   // Navigate after login once currentUser is populated in context
   useEffect(() => {
     if (loginAttempted && currentUser) {
-      navigate(currentUser.role === "farmer" ? "/farmer/dashboard" : "/marketplace");
+      navigate(currentUser.role === "farmer" ? "/farmer/dashboard" : "/buyer/dashboard");
     }
   }, [currentUser, loginAttempted, navigate]);
 
