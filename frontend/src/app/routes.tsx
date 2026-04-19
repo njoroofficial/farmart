@@ -17,6 +17,8 @@ import { MyListingsPage } from "./pages/farmer/MyListingsPage";
 import { AddAnimalPage } from "./pages/farmer/AddAnimalPage";
 import { EditAnimalPage } from "./pages/farmer/EditAnimalPage";
 import { OrdersPage } from "./pages/farmer/OrdersPage";
+import { BuyerLayout } from "./pages/buyer/BuyerLayout";
+import { BuyerDashboardPage } from "./pages/buyer/BuyerDashboardPage";
 
 
 
@@ -72,6 +74,15 @@ export const router = createBrowserRouter([
       { path: "listings/add", Component: AddAnimalPage },
       { path: "listings/:id/edit", Component: EditAnimalPage },
       { path: "orders", Component: OrdersPage },
+    ],
+  },
+  {
+    path: "/buyer",
+    Component: BuyerLayout,
+    children: [
+      { path: "dashboard", Component: BuyerDashboardPage },
+      { path: "orders", Component: MyOrdersPage },
+      { path: "cart", Component: CartPage },
     ],
   },
 ]);

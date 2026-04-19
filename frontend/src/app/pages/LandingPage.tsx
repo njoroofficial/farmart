@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
+import { useApp } from "../context/AppContext";
 import {
   Search,
   ArrowRight,
@@ -88,9 +89,124 @@ const HOW_IT_WORKS = [
   },
 ];
 
+function CountUp({ target, duration = 2000 }: { target: string; duration?: number }) {
+  const [display, setDisplay] = useState("0");
+  const ref = useRef<HTMLSpanElement>(null);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasAnimated.current) {
+            hasAnimated.current = true;
+            const match = target.match(/^([^0-9]*)([0-9,]+(?:\.[0-9]+)?)([^0-9]*)$/);
+            if (!match) { setDisplay(target); return; }
+            const prefix = match[1] || "";
+            const numStr = match[2].replace(/,/g, "");
+            const suffix = match[3] || "";
+            const num = parseFloat(numStr);
+            const startTime = performance.now();
+            const animate = (now: number) => {
+              const elapsed = now - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+              const ease = 1 - Math.pow(1 - progress, 4);
+              const current = Math.round(num * ease);
+              setDisplay(`${prefix}${current.toLocaleString("en-US")}${suffix}`);
+              if (progress < 1) requestAnimationFrame(animate);
+            };
+            requestAnimationFrame(animate);
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [target, duration]);
+
+  return <span ref={ref}>{display}</span>;
+}
+
+function CategoryCarousel() {
+  const [start, setStart] = useState(0);
+  const [visible, setVisible] = useState(2);
+
+  useEffect(() => {
+    const update = () => {
+      if (window.innerWidth >= 1024) setVisible(5);
+      else if (window.innerWidth >= 640) setVisible(3);
+      else setVisible(2);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  const maxStart = Math.max(0, CATEGORIES.length - visible);
+  const showPrev = start > 0;
+  const showNext = start < maxStart;
+
+  return (
+    <div className="relative">
+      <div className="overflow-hidden">
+        <div
+          className="flex gap-3 transition-transform duration-300"
+          style={{ transform: `translateX(-${start * (100 / visible + 0.5)}%)` }}
+        >
+          {CATEGORIES.map((cat) => (
+            <Link
+              key={cat.type}
+              to={`/marketplace?type=${cat.type}`}
+              className="group relative flex flex-col justify-end rounded-2xl overflow-hidden aspect-[4/3] hover:scale-[1.03] transition-transform duration-200 shadow-sm shrink-0"
+              style={{ width: `${90 / visible}%` }}
+            >
+              <img
+                src={cat.image}
+                alt={cat.type}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="relative z-10 p-3">
+                <p className="text-white text-sm" style={{ fontWeight: 700 }}>
+                  {cat.type}
+                </p>
+                <p className="text-white/70 text-[10px]">
+                  {cat.count > 0
+                    ? `${cat.count} listed · from ${formatPrice(cat.fromPrice!)}`
+                    : "Coming soon"}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+      {showPrev && (
+        <button
+          onClick={() => setStart((s) => Math.max(0, s - 1))}
+          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 bg-white rounded-full p-2 shadow-md hover:bg-gray-50 z-10"
+        >
+          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        </button>
+      )}
+      {showNext && (
+        <button
+          onClick={() => setStart((s) => Math.min(maxStart, s + 1))}
+          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 bg-white rounded-full p-2 shadow-md hover:bg-gray-50 z-10"
+        >
+          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function LandingPage() {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  const { currentUser } = useApp();
 
   // Top 4 by popularity (rating × review count), available only
   const featured = [...mockAnimals]
@@ -170,7 +286,7 @@ export function LandingPage() {
 
             <div className="flex flex-wrap gap-3">
               <Link
-                to="/marketplace"
+                to={currentUser ? "/marketplace" : "/login"}
                 className="flex items-center gap-2 bg-[#2D6A4F] hover:bg-[#235A41] text-white px-6 py-3 rounded-xl text-sm transition-colors"
                 style={{ fontWeight: 600 }}
               >
@@ -200,7 +316,7 @@ export function LandingPage() {
                   className="text-white"
                   style={{ fontWeight: 700, fontSize: "1.25rem" }}
                 >
-                  {stat.value}
+                  <CountUp target={stat.value} />
                 </p>
                 <p className="text-gray-300 text-xs">{stat.label}</p>
               </div>
@@ -231,35 +347,7 @@ export function LandingPage() {
             View All <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-          {CATEGORIES.map((cat) => (
-            <Link
-              key={cat.type}
-              to={`/marketplace?type=${cat.type}`}
-              className="group relative flex flex-col justify-end rounded-2xl overflow-hidden aspect-3/4 hover:scale-[1.03] transition-transform duration-200 shadow-sm"
-            >
-              {/* Background image */}
-              <img
-                src={cat.image}
-                alt={cat.type}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
-              {/* Text */}
-              <div className="relative z-10 p-3">
-                <p className="text-white text-sm" style={{ fontWeight: 700 }}>
-                  {cat.type}
-                </p>
-                <p className="text-white/70 text-[10px]">
-                  {cat.count > 0
-                    ? `${cat.count} listed · from ${formatPrice(cat.fromPrice!)}`
-                    : "Coming soon"}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <CategoryCarousel />
       </section>
 
       {/* ── Featured Listings ── */}
@@ -414,7 +502,7 @@ export function LandingPage() {
                     className="text-white mb-1"
                     style={{ fontWeight: 700, fontSize: "1.5rem" }}
                   >
-                    {item.value}
+                    <CountUp target={item.value} />
                   </p>
                   <p className="text-[#B7E4C7] text-xs">{item.label}</p>
                 </div>
