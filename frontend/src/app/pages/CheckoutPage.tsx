@@ -81,7 +81,7 @@ export function CheckoutPage() {
 
       // Navigate to payment success page (placeOrder already clears the cart)
       navigate(`/payment-success?orderId=${orderId}&paymentMethod=${paymentMethod}&total=${cartTotal}`);
-    } catch (err) {
+    } catch (_err) {
       // Display error if order placement fails
       setError('Failed to place order. Please try again.');
     } finally {
