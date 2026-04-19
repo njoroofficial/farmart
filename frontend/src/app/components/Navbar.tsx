@@ -8,7 +8,6 @@ import {
   ChevronDown,
   LogOut,
   LayoutDashboard,
-  List,
   PlusCircle,
   Package,
 } from "lucide-react";
