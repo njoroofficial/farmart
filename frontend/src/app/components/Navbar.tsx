@@ -35,7 +35,7 @@ export function Navbar() {
         { label: "Orders", to: "/farmer/orders" },
       ]
     : [
-        { label: "Browse Animals", to: currentUser ? "/marketplace" : "/login" },
+        { label: "Browse Animals", to: currentUser ? "/marketplace" : "/register" },
         { label: "Categories", to: "/marketplace?tab=categories" },
         ...(currentUser ? [{ label: "Dashboard", to: "/buyer/dashboard" }] : []),
       ];

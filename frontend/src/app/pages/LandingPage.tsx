@@ -300,7 +300,7 @@ export function LandingPage() {
 
             <div className="flex flex-wrap gap-3">
               <Link
-                to={currentUser ? "/marketplace" : "/login"}
+                to={currentUser ? "/marketplace" : "/register"}
                 className="flex items-center gap-2 bg-[#2D6A4F] hover:bg-[#235A41] text-white px-6 py-3 rounded-xl text-sm transition-colors"
                 style={{ fontWeight: 600 }}
               >
